@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AgroTech RPG 🌾</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0a0a12;font-family:'Courier New',monospace;color:#e0e0e0}
+input{background:#0d0d1a;border:1px solid #60a5fa;color:#FFD700;padding:8px 10px;font-family:'Courier New',monospace;font-size:13px;width:100%;border-radius:2px;outline:none}
+button{font-family:'Courier New',monospace;cursor:pointer;border-radius:2px;transition:all 0.15s}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-thumb{background:#2a2a45}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useEffect}=React;
+
+const PETS=[
+  {id:"minhoca",label:"Minhoca Sábia",emoji:"🪱",bonus:"+15% XP Solo",stat:"exp",color:"#c084fc"},
+  {id:"abelha",label:"Abelha Poliniz.",emoji:"🐝",bonus:"+8 HP/acerto",stat:"hp",color:"#fbbf24"},
+  {id:"sapo",label:"Sapo Bioindicad.",emoji:"🐸",bonus:"Revela 1 erro",stat:"hint",color:"#4ade80"},
+  {id:"joaninha",label:"Joaninha do MIP",emoji:"🐞",bonus:"-12 dano receb.",stat:"def",color:"#f87171"},
+  {id:"coruja",label:"Coruja Técnica",emoji:"🦉",bonus:"+15% XP Água",stat:"exp2",color:"#60a5fa"},
+];
+
+const PHASES=[
+{id:1,title:"World 1: A Terra de Seu Raimundo",subtitle:"Solo & Erosão",icon:"🌧️",world:"MUNDO 1",color:"#6B3A1F",accent:"#FFD700",
+story:"Primeiro dia como Técnico Zé Raiz! Seu Raimundo planta soja há 18 anos da mesma forma que o pai ensinou. Após fortes chuvas, o solo escorre pela lavoura em enxurradas vermelhas. É o seu World 1-1 — sem passar aqui, não há próxima fase!",
+questions:[
+  {q:"Ao inspecionar a propriedade, você nota enxurrada vermelha escorrendo pela lavoura após chuva de 45mm. Ao abrir um perfil de solo, percebe que os primeiros 5cm têm coloração mais escura que as camadas abaixo. Qual fenômeno está ocorrendo e o que a diferença de cor indica?",
+  ctx:"Solo Latossolo Vermelho-Amarelo, declividade 12%, sem cobertura vegetal após colheita, chuva de 60mm/h por 45 minutos.",
+  opts:["A. Lixiviação profunda que remove argila do horizonte B para a superfície, deixando a camada superior mais escura por acúmulo mineral","B. Gleização por encharcamento temporário — o oxigênio é consumido e o ferro reduz, criando coloração mais escura na camada superficial","C. Erosão laminar acelerada removendo a camada mais rica em matéria orgânica; a cor mais escura dos primeiros 5cm indica justamente essa riqueza que está sendo perdida","D. Compactação superficial que concentra partículas finas; a cor escura indica acúmulo de argila iluviada na superfície","E. Processo de ferralitização intensa que oxida o ferro superficial, produzindo coloração mais escura por concentração de óxidos de Fe³⁺"],
+  correct:2,xp:25,diff:1,
+  why:"💡 A camada mais escura nos primeiros 5cm é rica em matéria orgânica — exatamente a fração mais fértil do solo. A erosão laminar remove preferencialmente essas partículas orgânicas mais leves durante o escoamento superficial. A enxurrada vermelha confirma: os coloides argilosos e a MO estão sendo transportados. A Embrapa estima perdas de 20-40 t/ha/ano em solos do Cerrado sem cobertura. Com 4 t/ha de palha, a erosão cai 80-95%."},
+  {q:"Você usa um penetrômetro de campo e obtém estas leituras: 0-15cm = 1,1 MPa; 15-25cm = 3,9 MPa; 25-40cm = 1,4 MPa. Seu Raimundo ara no mesmo nível há 15 anos. Qual é o diagnóstico correto e a ação técnica indicada?",
+  ctx:"Solo com 55% de argila. Histórico de aração convencional a 18cm de profundidade todo ano. Soja está com raízes dobradas horizontalmente a 15cm.",
+  opts:["A. A camada de 15-25cm está na transição entre horizontes A e B — resistência alta é normal nessa profundidade e não requer intervenção agronômica","B. O perfil indica gleização subsuperficial com cimentação por hidróxidos de alumínio; a solução é calagem profunda com incorporação de calcário a 25cm","C. O solo apresenta compactação por tráfego excessivo em toda a profundidade; recomendar gessagem superficial para romper as ligações eletrostáticas entre as argilas","D. A resistência de 3,9 MPa a 15-25cm caracteriza pé de arado, criado pelo disco trabalhando sempre na mesma profundidade; a solução é subsolagem a 45cm + transição para plantio direto","E. O valor de 3,9 MPa indica horizonte B latossólico naturalmente denso; não é necessária intervenção pois as raízes se adaptam com o tempo"],
+  correct:3,xp:28,diff:2,
+  why:"💡 Raízes de soja param de crescer com resistência à penetração acima de 2,0 MPa. A camada de 3,9 MPa a 15-25cm é criada mecanicamente pelo arado: o disco sempre trabalha na mesma profundidade e comprime a camada logo abaixo. Raízes dobradas horizontalmente a 15cm confirmam o diagnóstico. Solução: subsolagem a 45-50cm (rompe sem inverter o perfil) + jamais retornar ao arado."},
+  {q:"A análise de solo retornou: pH 4,8 — Al³⁺ = 2,1 cmolc/dm³ — MO = 0,9% — P = 3,2 mg/dm³ — K = 42 mg/dm³. Seu Raimundo quer plantar soja semana que vem e argumenta: 'Sempre plantei com esses números e sempre produzi.' Qual a orientação técnica correta?",
+  ctx:"Solo Latossolo Vermelho, textura argilosa. Produtividade atual: 42 sc/ha. Potencial regional para soja: 65-72 sc/ha.",
+  opts:["A. Pode plantar imediatamente, pois a soja é tolerante à acidez e o inoculante com Bradyrhizobium vai compensar os níveis críticos de alumínio","B. Aplicar apenas gesso agrícola (1 t/ha) antes do plantio — é suficiente para neutralizar o Al³⁺ e permitir o plantio dentro da semana","C. O plantio pode ser feito, mas com redução de 30% na dose de fertilizante nitrogenado para não agravar a acidez do solo nas primeiras semanas","D. Adiar o plantio: pH 4,8 e Al³⁺ 2,1 cmolc/dm³ (7x acima do limite crítico de 0,3) inviabilizam o ciclo completo. Exige calagem (3,5-4 t/ha) + 60-90 dias de reação antes de plantar","E. Plantar com cultivar de ciclo precoce para minimizar o tempo de exposição ao alumínio tóxico — reduz o dano sem atrasar o calendário agrícola"],
+  correct:3,xp:38,diff:2,
+  why:"💡 Al³⁺ = 2,1 cmolc/dm³ é 7 vezes o limite crítico (0,3 cmolc/dm³). Em contato com o alumínio tóxico, as pontas das raízes de soja necrosam — raízes curtas, grossas e marrons incapazes de explorar o perfil. A baixa produtividade histórica de 42 sc/ha (vs. potencial de 65-72) é consequência direta desse quadro. O calcário precisa de 60-90 dias para reagir com o solo. Payback: custo de R$1.800/ha recuperado em uma safra com +23 sc/ha."},
+  {q:"Você escava 30×30×30cm na lavoura de Seu Raimundo: ZERO minhocas. No fragmento de mata ciliar adjacente: 52 minhocas. O filho do produtor diz: 'Minhoca não tem nada a ver com produção, isso é coisa de biologista.' Como você rebate com argumento técnico?",
+  ctx:"Lavoura: pH 4,8, temperatura do solo 41°C, sem cobertura, 3 aplicações de organofosforado/safra. Mata: pH 5,4, temperatura 27°C, serapilheira espessa.",
+  opts:["A. Minhocas são indicadores de risco fitossanitário — sua presença em alta densidade favorece fungos de solo como Fusarium, e a ausência na lavoura é na verdade um indicador positivo de sanidade","B. A comparação não é válida porque a mata tem condições naturalmente mais favoráveis à fauna; a lavoura precisa de produtividade, não de biodiversidade","C. A ausência indica colapso da biologia do solo: minhocas criam bioporos que aumentam infiltração em 3-10x, produzem bolotas fecais com 5-11x mais nutrientes disponíveis e suas galerias reduzem compactação — serviços que nenhum insumo comprado substitui completamente","D. O correto seria comparar com outra lavoura, não com mata — ambientes tão distintos tornam a comparação biologicamente inválida para fins agronômicos","E. A diferença se explica pelo pH mais alto da mata; basta fazer calagem na lavoura para as minhocas retornarem naturalmente em 30 dias"],
+  correct:2,xp:30,diff:2,
+  why:"💡 300-500 minhocas/m² em solo saudável criam um sistema de infraestrutura biológica: bioporos de 2-10mm aumentam infiltração de água em 3-10x, bolotas fecais têm 5x mais N, 7x mais P e 11x mais K disponível que o solo ao redor, e a bioturbação contínua mantém a macroporosidade. O pH baixo + temperatura letal (acima de 38°C) + ausência de MO + organofosforados de amplo espectro explicam o colapso completo da fauna do solo na lavoura."},
+  {q:"Seu Raimundo aplicou 180 kg/ha de ureia às 13h de um dia com 36°C, solo seco e pH superficial 6,8. Três dias depois não choveu e ele pergunta quando o nitrogênio estará disponível para as plantas. O que provavelmente aconteceu?",
+  ctx:"Umidade relativa: 28%. Vento: 18 km/h. Sem sistema de irrigação disponível. Custo da ureia aplicada: R$540.",
+  opts:["A. A ureia foi hidrolisada pela urease do solo em NH₄⁺, que foi adsorvido pelas cargas negativas da argila e estará disponível progressivamente por 15 a 20 dias","B. Em pH 6,8, a ureia foi convertida a NH₄⁺ que se precipitou como (NH₄)₂SO₄ insolúvel junto com o sulfato do solo — não haverá absorção sem irrigação","C. A ureia se transformou em NH₄⁺ e depois foi nitrificada a NO₃⁻ pelas bactérias Nitrosomonas — está disponível mas corre risco de lixiviação na primeira chuva","D. A ureia cristalizou na superfície do solo seco e ficará inativa até a chuva — processo reversível sem perda de nitrogênio","E. Provavelmente 55-80% do N volatilizou como NH₃ gasoso: a combinação de pH alto, calor, solo seco e vento cria as condições ideais para perda máxima por volatilização"],
+  correct:4,xp:35,diff:2,
+  why:"💡 A volatilização da amônia segue a reação: Ureia + urease → CO₂ + 2NH₃↑. Em pH 6,8, temperatura 36°C e solo seco, a velocidade da reação é máxima: a NH₃ formada não é absorvida pelo solo (cargas negativas saturadas em pH alto) e o vento remove continuamente o gás da superfície. Estudos com marcador isotópico ¹⁵N mostram perdas de 55-80% nessas condições. Dos R$540 investidos, até R$432 foram para o ar."},
+  {q:"Uma voçoroca de 3m de profundidade avança 2m/mês em direção à lavoura. O proprietário vizinho tampou uma voçoroca similar com entulho de construção e agora ela parece contida. Ele recomenda o mesmo para Seu Raimundo. Qual é a avaliação técnica correta?",
+  ctx:"Solo arenoso-argiloso, declividade 18% na cabeceira. Chuvas previstas: 120mm na próxima semana. Área a montante: 15ha de lavoura exposta contribuindo com escoamento.",
+  opts:["A. A técnica do vizinho foi bem-sucedida e pode ser replicada; entulho de construção tem boa coesão e age como barreira física eficaz contra o avanço da erosão","B. Aterrar com entulho resolve o sintoma temporariamente mas não a causa; sem interceptar o escoamento a montante e revegetar as bordas com espécies de raiz profunda, a voçoroca retoma o avanço na próxima chuva intensa","C. A voçoroca do vizinho foi contida porque o entulho criou condições para colonização por braquiária — basta aguardar o crescimento espontâneo das gramíneas","D. Para voçorocas acima de 2m de profundidade, a única solução tecnicamente viável é o aterro completo com solo argiloso compactado em camadas de 20cm","E. O correto é abrir um canal de desvio paralelo à voçoroca para direcionar a água e reduzir o fluxo interno — o aterro é contraindicado em qualquer situação"],
+  correct:1,xp:32,diff:2,
+  why:"💡 A voçoroca tem duas frentes de avanço: superficial (escoamento que entra pela cabeceira) e interna (erosão pelo lençol freático percolado). Aterrar sem tratar a causa é como tapar um buraco num barco sem tirar a água — na próxima chuva, a pressão hidráulica recria o caminho. Plano correto: (1) terraços/canaletas a montante para interceptar o escoamento; (2) gabiões de pedra para conter o avanço; (3) Capim Vetiver na borda (raízes de 3m, resistência de 75 MPa ao cisalhamento)."},
+  {q:"Qual é a diferença funcional entre calagem com calcário e gessagem com gesso agrícola para corrigir um solo com pH 4,8 e Al³⁺ elevado no subsolo?",
+  ctx:"Solo com Al³⁺ = 1,8 cmolc/dm³ a 40cm de profundidade. Raízes de soja precisam alcançar 80cm para ter reserva hídrica suficiente na seca.",
+  opts:["A. Calcário e gesso têm o mesmo mecanismo de ação: ambos elevam o pH e precipitam o alumínio — a diferença é apenas o preço e a disponibilidade no mercado","B. O calcário eleva o pH e neutraliza o Al³⁺ até 80cm de profundidade por migração natural em 2 safras; o gesso é usado apenas quando o solo é deficiente em enxofre","C. O calcário tem baixa solubilidade e migra 2-3cm/ano — corrige o pH na superfície mas não chega ao subsolo em tempo útil. O gesso (CaSO₄) é solúvel, migra com a água e neutraliza o Al³⁺ em profundidade, liberando Ca²⁺ para as raízes","D. O calcário é indicado para solos argilosos e o gesso para solos arenosos, pois a textura determina qual produto tem maior eficiência no deslocamento de cátions","E. O gesso aumenta a acidez do solo por liberar H⁺ durante a reação, sendo contraindicado quando o pH já está baixo — deve-se aplicar calcário primeiro e gesso apenas após atingir pH 6,0"],
+  correct:2,xp:36,diff:3,
+  why:"💡 O calcário tem taxa de reação lenta e mobilidade de apenas 2-3cm/ano no perfil — levaria 15-20 anos para chegar a 40cm. O gesso (CaSO₄·2H₂O) tem solubilidade 150x maior: o SO₄²⁻ forma par iônico com o Al³⁺ precipitando-o como Al₂(SO₄)₃ insolúvel e disponibiliza Ca²⁺ no subsolo. Resultado documentado: raízes de soja passam de 30-40cm (sem gesso) para 80-100cm de profundidade, aumentando a resistência à seca e o acesso a nutrientes em profundidade."},
+  {q:"Seu Raimundo quer calcular quanto carbono o solo perdeu em 18 anos de cultivo convencional. A MO caiu de 4,5% (mata original estimada) para 0,9% hoje. Considerando densidade do solo de 1,3 g/cm³ e profundidade de 30cm, qual a perda de carbono por hectare?",
+  ctx:"Fórmula: Carbono orgânico do solo (COS) = MO × 0,58. Perda de C (t/ha) = (COS inicial − COS atual) / 100 × densidade × profundidade em cm × 10.000m².",
+  opts:["A. Perda de aproximadamente 22 t C/ha — calculada pela diferença de MO dividida pela densidade do solo","B. Perda de aproximadamente 12 t C/ha — calculada considerando apenas os primeiros 15cm de solo onde a MO se concentra","C. Perda de aproximadamente 81 t C/ha — calculada pelo diferencial de COS (2,61% − 0,52%) multiplicado pela massa de solo por hectare","D. Perda de aproximadamente 45 t C/ha — calculada pela diferença de MO total sem aplicar o fator de conversão para carbono orgânico","E. Perda de aproximadamente 35 t C/ha — calculada pela diferença de 3,6% de MO dividida por dois, referente às frações lábil e recalcitrante"],
+  correct:2,xp:42,diff:3,
+  why:"💡 COS inicial = 4,5% × 0,58 = 2,61% C. COS atual = 0,9% × 0,58 = 0,52% C. Diferença = 2,09% C. Cálculo: (2,09/100) × 1,3 g/cm³ × 30cm × 10.000m²/ha = (0,0209) × 1,3 × 0,30m × 10.000.000g/ha ≈ 81.510 kg/ha ≈ 81 t C/ha. Em 120ha: ~9.720 t C = ~35.670 t CO₂ emitidas — equivalente a abastecer 6.300 carros por 1 ano. No mercado voluntário de carbono (R$60-150/t CO₂): R$2,1 a R$5,4 milhões de passivo climático."},
+  {q:"Você precisa elaborar o laudo técnico do CAR para a propriedade de Seu Raimundo (170ha total). Ele tem um córrego com 12m de largura cortando a propriedade por 800m de extensão. Quantos hectares de APP são exigidos apenas para esse córrego, segundo o Código Florestal?",
+  ctx:"Lei 12.651/2012, Art. 4°, inciso I: rios de 10 a 50m de largura exigem APP de 50m em cada margem.",
+  opts:["A. 4,8 ha — calculado pela fórmula: 800m × 30m (cada margem) × 2 / 10.000","B. 8,0 ha — calculado pela fórmula: 800m × 50m (cada margem) × 2 / 10.000","C. 9,6 ha — calculado somando a área do leito do córrego (800m × 12m) às duas faixas de APP de 30m","D. 12,0 ha — calculado pela fórmula: 800m × 75m (média entre 50m e 100m) / 10.000","E. 6,4 ha — calculado pela fórmula: 800m × 40m (cada margem para rios entre 10-20m de largura) / 10.000"],
+  correct:1,xp:40,diff:3,
+  why:"💡 Para rios de 10 a 50m de largura (Art. 4°, I, Lei 12.651/2012): APP = 50m em CADA margem. Cálculo: 800m (extensão) × 50m (cada margem) × 2 margens = 80.000m² = 8,0 ha. Sem contar as APPs de nascente (50m de raio) e de topo de morro, se existirem. Um técnico que subestima a APP e assina um laudo de CAR incorreto responde por infração administrativa no CREA e pode ter o registro cassado."},
+]},
+
+{id:2,title:"World 2: A Sede da Terra",subtitle:"Água, Irrigação & Qualidade Hídrica",icon:"💧",world:"MUNDO 2",color:"#1A3A6B",accent:"#60CFFF",
+story:"LEVEL UP! Dona Marlene tem 3ha de horticultura irrigada e o ribeirão está secando. Mas o rio também ficou verde-fluorescente e os pescadores estão furiosos. Você precisa resolver a crise hídrica E a crise ambiental ao mesmo tempo.",
+questions:[
+  {q:"O tensiômetro instalado na horta de Dona Marlene marcou 8 kPa a 15cm de profundidade. Ela irriga diariamente ao meio-dia com 8mm de água por mangueira manual. A ETc calculada do dia foi de 6,4mm. Qual é a interpretação técnica correta?",
+  ctx:"Eficiência da mangueira manual: 45-50%. Capacidade de campo do solo: tensão de 10 kPa. Temperatura de 37°C às 13h.",
+  opts:["A. O tensiômetro indica deficit hídrico severo (quanto menor a tensão, mais seco o solo) — Dona Marlene deve irrigar imediatamente com o dobro da dose","B. A tensão de 8 kPa indica solo próximo à saturação (tensão de CC = 10 kPa) — Dona Marlene está aplicando água em excesso, e ao meio-dia 40-60% evapora antes de atingir as raízes","C. O tensiômetro está com defeito — tensão abaixo de 10 kPa é fisicamente impossível em solo cultivado com plantas transpirando ativamente","D. A tensão de 8 kPa é o ponto exato de máxima eficiência de absorção para alface — a irrigação está perfeitamente calibrada","E. O valor indica encharcamento temporário causado pelo lençol freático subindo — deve-se instalar drenos antes de qualquer ajuste na irrigação"],
+  correct:1,xp:30,diff:2,
+  why:"💡 No tensiômetro, quanto MENOR a tensão em kPa, mais ÚMIDO o solo. Tensão de 8 kPa = solo quase saturado (CC está em 10 kPa). Dona Marlene irriga solo que já está cheio! Além disso, ao meio-dia em 37°C, a evapotranspiração potencial é máxima — com eficiência de 45%, metade da água aplicada evapora antes de chegar às raízes. Solução: irrigar de madrugada ou início da manhã, somente quando a tensão atingir 25-30 kPa."},
+  {q:"O rio próximo à propriedade de Dona Marlene ficou com coloração verde-fluorescente. A análise revelou: P-total = 0,8 mg/L, OD = 2,1 mg/L, presença massiva de cianobactérias Microcystis. Qual é o diagnóstico técnico completo do que aconteceu?",
+  ctx:"Padrão CONAMA 357/2005 para Rio Classe 2: P-total < 0,1 mg/L; OD mínimo = 5,0 mg/L. Cinco propriedades rurais com lavouras irrigadas ficam a montante.",
+  opts:["A. A coloração verde indica alta produtividade primária natural do rio — rios com alto teor de P sempre têm essa característica e o OD baixo ocorre naturalmente à noite por respiração das algas","B. O evento é causado por contaminação industrial pontual; lavouras irrigadas não liberam fósforo suficiente para causar eutrofização em rios de médio porte","C. O excesso de P (8x acima do limite) proveniente de adubação fosfatada acima da necessidade desencadeou bloom de cianobactérias; a decomposição da biomassa algal consumiu o OD (abaixo de 2,1 mg/L = zona hipóxica); Microcystis produz microcistinas hepatotóxicas — emergência ambiental e de saúde pública","D. O baixo OD é causado pelo aumento da temperatura da água no verão, que reduz naturalmente a solubilidade do oxigênio; o fósforo elevado é efeito, não causa","E. A Microcystis é uma cianobactéria fixadora de N₂ atmosférico que floresce naturalmente em rios com baixo teor de nitrogênio — seu aparecimento indica que as lavouras vizinhas reduziram o uso de adubação nitrogenada"],
+  correct:2,xp:38,diff:3,
+  why:"💡 O ciclo da eutrofização: P em excesso no solo → lixiviação/escoamento para o rio → explosão de algas (bloom) → decomposição bacteriana da biomassa algal → consumo do O₂ → hipóxia → morte de peixes → odor e microcistinas tóxicas. P = 0,8 mg/L é 8x o limite CONAMA. OD = 2,1 mg/L está abaixo do mínimo vital para peixes sensíveis (4 mg/L). Microcistinas (MC-LR) têm NOEC de 0,04 μg/L para consumo humano — emergência real."},
+  {q:"Você calcula a lâmina bruta de irrigação para um dia com evaporação do Tanque Classe A de 9mm, coeficiente do tanque (Kt) = 0,75, Kc da alface em produção = 0,95, chuva efetiva do dia = 3mm e eficiência do gotejamento = 92%. Qual é o resultado correto?",
+  ctx:"Lâmina líquida (LL) = ETc − chuva efetiva. Lâmina bruta (LB) = LL / eficiência do sistema. ETc = ET₀ × Kc. ET₀ = Tanque × Kt.",
+  opts:["A. LB = 9 × 0,95 − 3 / 0,92 = 6,17mm","B. LB = (9 × 0,75 × 0,95 − 3) / 0,92 = 3,71mm","C. LB = 9 × 0,75 / 0,92 − 3 = 4,33mm","D. LB = (9 − 3) × 0,75 × 0,95 / 0,92 = 4,65mm","E. LB = 9 × 0,75 × 0,95 / 0,92 = 6,95mm"],
+  correct:1,xp:40,diff:3,
+  why:"💡 Passo a passo: ET₀ = 9mm × 0,75 = 6,75mm. ETc = 6,75 × 0,95 = 6,41mm. LL = ETc − chuva efetiva = 6,41 − 3,00 = 3,41mm. LB = LL / eficiência = 3,41 / 0,92 = 3,71mm. Os erros mais comuns são: não usar o Kt na ET₀ (resposta A), não subtrair a chuva efetiva antes de dividir pela eficiência (resposta C) ou subtrair a chuva antes de multiplicar pelos coeficientes (resposta D). App gratuito Irriger (Embrapa) automatiza esse cálculo."},
+  {q:"Uma nascente que abastecia o ribeirão secou progressivamente em 3 anos. A pluviometria local não mudou (média de 1.050mm/ano, estável nos últimos 10 anos). A cobertura florestal no raio de 500m ao redor da nascente caiu de 65% para 28% em 12 anos por desmatamento para pasto. Qual é a relação de causa e efeito?",
+  ctx:"Taxa de infiltração em floresta densa: 150mm/h. Taxa de infiltração em pastagem compactada: 12mm/h. Solo da área de recarga: resistência à penetração > 3 MPa por pisoteio excessivo.",
+  opts:["A. A redução da cobertura florestal aumenta o albedo da superfície, elevando a temperatura local e aumentando a evapotranspiração da vegetação remanescente — isso seca o solo e reduz a recarga","B. O pastejo compacta o solo e reduz a infiltração de 150 para 12mm/h na área de recarga; a chuva que antes infiltrava e recarregava o aquífero agora vira escoamento superficial — a nascente seca porque o aquífero deixou de ser alimentado","C. A redução da cobertura aumenta a erosão laminar que assoreou o canal subterrâneo de alimentação da nascente — é um processo físico de bloqueio e não hidrológico","D. A correlação é coincidência temporal; as mudanças climáticas globais reduziram a umidade do ar mesmo sem mudar a pluviometria total, afetando a recarga do lençol freático","E. A pastagem tem menor evapotranspiração que a floresta — paradoxalmente isso deveria aumentar a disponibilidade de água para a nascente, e a seca tem outra causa não investigada"],
+  correct:1,xp:38,diff:3,
+  why:"💡 A evidência decisiva é a pluviometria inalterada: mesma chuva, nascente seca. O que mudou foi o destino da chuva. De 65% para 28% de floresta na área de recarga + solo compactado (>3 MPa): infiltração média caiu de ~100mm/h para ~35mm/h. Com chuva de 60mm/h, antes 100% infiltrava; agora apenas 35% infiltra e 65% escoa. O aquífero que alimentava a nascente deixou de receber recarga suficiente. É física da água — não depende de debate climático."},
+  {q:"A outorga de uso da água de Dona Marlene para irrigação venceu há 2 anos e ela não sabia. Você é o técnico responsável e está presente quando o fiscal da SEMA aparece para fiscalização. Qual é o procedimento técnico e legal correto?",
+  ctx:"Lei 9.433/1997 (Política Nacional de Recursos Hídricos). Captação: 2,5 L/s bombeados diretamente do ribeirão. Período de estiagem com restrição hídrica declarada pelo Comitê de Bacia.",
+  opts:["A. Orientar Dona Marlene a alegar desconhecimento da legislação ao fiscal — a boa-fé é reconhecida juridicamente e isenta de multa em primeira ocorrência","B. Como a outorga estava ativa antes e apenas venceu, os direitos de uso são tacitamente renovados por 5 anos — não há infração configurada até nova notificação formal","C. Solicitar ao fiscal que lavre apenas advertência e dê prazo de 90 dias para regularização, pois a Lei 9.433 prevê gradação de penalidades e a primeira infração não gera embargo imediato","D. Informar ao fiscal a situação completa, orientar Dona Marlene a protocolar imediatamente o pedido de renovação e reduzir voluntariamente a captação — omitir informações ao fiscal agravaria a situação legal do técnico que tem responsabilidade solidária com ART registrada","E. Solicitar que o fiscal retorne após 30 dias para dar tempo de regularização — o uso contínuo sem outorga válida durante a fiscalização é o único ato ilegal; interromper a captação naquele momento resolve a infração"],
+  correct:3,xp:35,diff:3,
+  why:"💡 Lei 9.433/1997: o uso de recursos hídricos sem outorga válida é infração ambiental com multa de R$10.000 a R$10.000.000 + embargo. A transparência com o fiscal é obrigatória — o técnico com ART registrada tem responsabilidade solidária pelos projetos que assinou. Protocolar imediatamente o pedido de renovação demonstra boa-fé e pode influir na gradação da penalidade. Em período de restrição hídrica declarada, o risco de embargo imediato é real."},
+  {q:"Você analisa a água do ribeirão usada para irrigação: CE = 1,8 dS/m, pH = 7,8, RAS (Razão de Adsorção de Sódio) = 8,2. Dona Marlene produz alface, tomate e pimentão. Qual é a avaliação técnica correta para uso na irrigação?",
+  ctx:"Limiares de tolerância à salinidade: alface = CE 1,3 dS/m; tomate = CE 2,5 dS/m; pimentão = CE 1,5 dS/m. RAS > 9 indica risco sério de sodicidade no solo. FAO: CE 0,7-3,0 dS/m = restrição moderada à irrigação.",
+  opts:["A. A água é adequada para todas as culturas — CE de 1,8 dS/m está dentro do limite de tolerância do tomate e representa apenas restrição leve para as demais","B. A água é inadequada para qualquer uso agrícola — CE acima de 1,5 dS/m causa salinização irreversível do solo em uma única safra","C. A água é adequada para tomate (limite 2,5), requer monitoramento para pimentão (limite 1,5) e representa risco real para alface (CE 1,8 > limite 1,3); o RAS de 8,2 ainda não é crítico mas exige gessagem preventiva e monitoramento da sodicidade do solo","D. O problema principal é o pH 7,8 — acima de 7,5 precipita o fósforo da fertirrigação; a salinidade e o RAS são secundários para essas culturas","E. Com gotejamento subsuperficial, qualquer qualidade de água é aceitável porque o contato com as folhas é eliminado, o que é o principal vetor de dano por salinidade"],
+  correct:2,xp:35,diff:3,
+  why:"💡 A avaliação deve ser feita cultura por cultura. Alface (CE limite 1,3 dS/m): a água com CE 1,8 já supera o limiar — risco real de redução de 10-20% na produtividade. Pimentão (CE limite 1,5): requer monitoramento. Tomate (CE limite 2,5): ainda dentro do tolerável. O RAS de 8,2 está próximo do limite de risco (9) — com irrigação contínua, o sódio vai progressivamente dispersando as argilas do solo. Solução: gesso agrícola (1-2 t/ha) para competir com Na⁺ + substituir alface por culturas mais tolerantes."},
+  {q:"O Índice de OD (Oxigênio Dissolvido) medido no ponto de captação do ribeirão é de 3,2 mg/L. A CONAMA 357/2005 para rios Classe 2 exige mínimo de 5,0 mg/L. Qual é o impacto técnico direto do uso dessa água na irrigação de hortaliças?",
+  ctx:"Temperatura da água: 28°C. OD de saturação a 28°C = 7,8 mg/L. O ponto de captação fica 300m a jusante do ponto de lançamento do efluente do frigorífico identificado na fase anterior.",
+  opts:["A. Água com baixo OD irriga normalmente — plantas absorvem O₂ pelo ar, não pela água de irrigação; o OD é relevante apenas para criação de peixes","B. OD baixo na água de irrigação causa deficiência de oxigênio na rizosfera quando o solo fica saturado — raízes de hortaliças são sensíveis à hipóxia radicular; adicionalmente, água com OD baixo indica alta carga microbiana com risco sanitário para hortaliças consumidas cruas","C. O único impacto é estético — água escura com baixo OD pode manchar as folhas das hortaliças, mas não afeta o crescimento ou a segurança alimentar","D. Plantas cultivadas em solo arenoso não sofrem hipóxia radicular mesmo com água de baixo OD, porque a macroporosidade do solo compensa a deficiência de oxigênio na água","E. O OD baixo indica água ácida com excesso de CO₂ dissolvido — o impacto principal é a acidificação do solo irrigado ao longo do tempo"],
+  correct:1,xp:38,diff:3,
+  why:"💡 Água com baixo OD apresenta dois problemas para horticultura irrigada: (1) Risco sanitário: OD baixo indica alta DBO — presença de matéria orgânica em decomposição e potencialmente patógenos fecais (água a jusante de frigorífico). Hortaliças consumidas cruas (alface, pimentão) precisam de água de irrigação com qualidade compatível com consumo humano; (2) Risco agronômico: quando o solo fica saturado por irrigação excessiva, as raízes dependem do O₂ dissolvido na água — hipóxia radicular reduz absorção de N, P e K."},
+  {q:"Um produtor vizinho aplica glifosato há 10 anos na mesma área. Você detecta que o nível de manganês disponível no solo caiu progressivamente mesmo sem alteração no pH. Qual é a hipótese técnica mais embasada para explicar esse fenômeno?",
+  ctx:"pH atual: 6,2 (estável nos últimos 5 anos). Análise foliar de soja: Mn disponível caiu de 45 para 18 mg/kg em 8 anos. Dose anual de glifosato: 2,5 L/ha de produto comercial.",
+  opts:["A. O glifosato é um herbicida de ação total e elimina as raízes das culturas anteriores que mineralizavam o Mn orgânico — sem decomposição de raízes, o Mn fica preso na MO","B. O glifosato quela o Mn²⁺ do solo formando complexos estáveis Mn-glifosato de baixa solubilidade; além disso, o glifosato inibe microrganismos redutores de Mn que mantêm esse micronutriente na forma disponível (Mn²⁺)","C. O glifosato acidifica progressivamente o solo por sua decomposição em CO₂ e H₂O — a acidificação em pH abaixo de 5,5 precipita o Mn como MnO₂","D. O glifosato estimula bactérias nitrificantes que, ao oxigenar o solo, convertem Mn²⁺ (disponível) a Mn⁴⁺ (indisponível) — é um efeito colateral bem documentado da nitrificação acelerada","E. A correlação é espúria — a redução de Mn disponível é causada pelo aumento de produtividade das culturas que exportam mais Mn nos grãos; o glifosato não tem relação com a dinâmica de micronutrientes"],
+  correct:1,xp:40,diff:4,
+  why:"💡 O glifosato (N-fosfonometilglicina) é um potente agente quelante: sua estrutura molecular contém grupos funcionais fosfato e amino que formam complexos estáveis com cátions divalentes como Mn²⁺, Zn²⁺ e Fe²⁺. Estudos publicados por Huber et al. (Purdue University, 2010) documentaram redução de 30-50% no Mn disponível em solos com uso frequente de glifosato. Adicionalmente, o glifosato inibe fungos micorrízicos e certas bactérias redutoras que mantêm o Mn na forma solúvel Mn²⁺."},
+]},
+
+{id:3,title:"World 3: Kaique e o Excesso de Tudo",subtitle:"Fertilizantes & Nutrição de Plantas",icon:"⚗️",world:"MUNDO 3",color:"#1A5E20",accent:"#A9FF6D",
+story:"POWER-UP DESBLOQUEADO! Kaique, 28 anos, herdou 80ha e quer ser o maior produtor da região em 3 anos. Seu lema: 'Mais adubo = mais produção!' Você precisa convencê-lo com ciência, dados e paciência.",
+questions:[
+  {q:"A análise foliar do milho de Kaique em V6 mostra deficiência de zinco (Zn): folhas novas com listras amarelas entre as nervuras. A análise de solo mostra 1,8 mg/dm³ de Zn disponível (nível crítico = 1,2 mg/dm³). Como explicar essa aparente contradição?",
+  ctx:"pH do solo: 6,9 (após calagem excessiva). Fósforo disponível: 48 mg/dm³ (muito alto — 5 anos de adubação fosfatada sem análise). Temperatura do solo: 18°C.",
+  opts:["A. A análise de Zn do laboratório está incorreta — deficiência foliar com Zn acima do crítico é tecnicamente impossível","B. A temperatura de 18°C inibiu a nitrificação do solo, bloqueando indiretamente a absorção de Zn que depende do fluxo de massa de nitrato","C. O pH 6,9 precipita o Zn em formas insolúveis — sua disponibilidade é máxima em pH 5,0-6,5. Além disso, o excesso de P (48 mg/dm³) precipita Zn como ZnHPO₄ e compete pelos mesmos transportadores radiculares — antagonismo P×Zn clássico","D. A deficiência de Zn foliar em milho é causada exclusivamente por doenças fúngicas como o enfezamento — a análise química não é suficiente para diagnosticar esse tipo de deficiência","E. O Zn está disponível no solo mas a cultivar de milho usada por Kaique tem mutação genética que bloqueia a absorção desse micronutriente — fenômeno frequente em cultivares transgênicas"],
+  correct:2,xp:35,diff:3,
+  why:"💡 O pH é o master controller da disponibilidade de micronutrientes. Em pH 6,9 (pós-calagem excessiva), o Zn forma compostos insolúveis (Zn(OH)₂, ZnCO₃). Simultaneamente, P > 30-40 mg/dm³ precipita Zn como ZnHPO₄ e compete pelos mesmos transportadores ZIP na membrana radicular. Solução imediata: ZnSO₄ foliar 0,3% (3-4 aplicações). Longo prazo: reduzir pH-alvo para 6,0-6,3 e não superdosar P."},
+  {q:"Kaique quer misturar ureia + superfosfato simples (SFS) + KCl no mesmo caminhão para economizar uma viagem. O técnico da cooperativa disse que 'pode misturar tudo'. Qual é a avaliação técnica correta?",
+  ctx:"Ureia: 45% N, higroscópica. SFS (Superfosfato Simples): contém Ca(H₂PO₄)₂ + CaSO₄ + H₃PO₄ livre + umidade natural. KCl: cloreto de potássio, relativamente estável. Temperatura do armazém: 34°C, umidade relativa: 72%.",
+  opts:["A. A mistura é segura se feita em menos de 2 horas antes da aplicação — o problema de compatibilidade só ocorre em misturas armazenadas por mais de 24h","B. KCl e ureia são incompatíveis — o cloreto forma HCl que hidrolisa a ureia e libera amônia; o SFS pode ser misturado com ureia sem problemas","C. Todas as três podem ser misturadas com segurança desde que a umidade relativa do ambiente esteja abaixo de 80% no momento da mistura","D. Ureia e SFS são incompatíveis: o H₃PO₄ livre do SFS reage com a ureia liberando NH₃ (perda de N), causando aquecimento, empedramento e possível fitotoxicidade na semeadura. KCl pode ser misturado com SFS. A solução é usar Superfosfato Triplo (SFT) no lugar do SFS","E. A incompatibilidade existe apenas quando se usa ureia perlada — ureia granulada tem revestimento que evita a reação com o H₃PO₄ do SFS"],
+  correct:3,xp:33,diff:3,
+  why:"💡 H₃PO₄ livre do SFS + CO(NH₂)₂ (ureia) → NH₄H₂PO₄ + NH₃↑. A amônia liberada representa perda direta de N e pode causar fitotoxicidade por concentração de NH₃ perto das sementes. O empedramento da mistura inviabiliza o funcionamento dos discos distribuidores das semeadeiras. Alternativa: Superfosfato Triplo (SFT) — sem H₃PO₄ livre — é compatível com ureia por até 24h. A tabela de compatibilidade ANDA/Embrapa lista 47 combinações problemáticas."},
+  {q:"A análise de solo de Kaique retornou: P-Mehlich = 35 mg/dm³ (nível alto), K = 220 mg/dm³ (nível alto), pH = 6,1 (ótimo). Ele produz soja com expectativa de 60 sc/ha. O técnico da cooperativa recomenda manter a mesma dose do ano passado 'por garantia'. Qual a recomendação tecnicamente correta?",
+  ctx:"Exportação de nutrientes pela soja a 60 sc/ha: 16 kg P₂O₅/ha e 14 kg K₂O/ha (dados Embrapa/IAC). Histórico: 5 anos de adubação com 80 kg P₂O₅/ha e 100 kg K₂O/ha sem análise de solo.",
+  opts:["A. Manter a mesma dose é correto — produtividade alta exige reposição igual ou superior ao ano anterior para garantir que o solo não entre em deficit","B. Reduzir ambas as doses em 50% como medida de precaução, reaplicando análise de solo em 6 meses para verificar se os teores se mantêm","C. Suspender totalmente a adubação de P e K por 3 anos — o solo com teores altos não precisa de adubação de manutenção, apenas de N","D. Adubar apenas com a quantidade exportada pela cultura: ~16 kg P₂O₅/ha e ~14 kg K₂O/ha — redução de 80% e 86% respectivamente, sem perda de produtividade","E. Dobrar a dose de P para aproveitar o preço baixo do fertilizante e criar 'reserva estratégica' no solo para os próximos 3-5 anos"],
+  correct:3,xp:40,diff:3,
+  why:"💡 Adubação CORRETIVA (eleva o teor no solo) vs. MANUTENÇÃO (repõe a exportação da cultura). Com P = 35 mg/dm³ (nível ALTO), o solo já tem estoque suficiente — P não é o fator limitante (lei do mínimo de Liebig). Aplicar 80 kg P₂O₅/ha = gastar R$192/ha sem retorno em produtividade. Manutenção correta: 16 kg P₂O₅ = R$38/ha. Economia: R$154/ha × 80ha = R$12.320/safra. Em 5 anos: R$61.600. Mais importante: excesso de P causa eutrofização dos rios."},
+  {q:"Kaique aplica 400 kg/ha de ureia em dose única no milho em plantio. O solo tem 20% de argila e a previsão indica 45mm de chuva em 3 dias. Quais são os riscos técnicos específicos dessa decisão?",
+  ctx:"Dose recomendada pela análise de solo: 160 kg N/ha, parcelado. 400 kg de ureia = 180 kg N/ha (já acima do recomendado para a lavoura). pH do solo: 6,2.",
+  opts:["A. O único risco é o excesso de N que estimula o crescimento vegetativo excessivo e retarda o florescimento — não há risco ambiental em dose única de ureia","B. Risco de volatilização de NH₃ (solo arenoso + dose alta = pH local aumenta pela hidrólise da ureia), e risco de lixiviação de NO₃⁻ para o lençol freático com os 45mm de chuva — NO₃⁻ não é retido pelo solo arenoso de baixa CTC","C. O risco principal é a acidificação do solo — 400 kg de ureia equivale a 4 t de calcário em poder de acidificação, e o pH vai cair para menos de 5,0 em uma semana","D. Solo arenoso retém o N na forma de NH₄⁺ por adsorção catiônica — sem risco de lixiviação; o único cuidado é evitar aplicar com vento acima de 20 km/h","E. Dose única é tecnicamente equivalente ao parcelamento — a planta absorve apenas o que precisa e o excesso é imobilizado pela biomassa microbiana sem riscos"],
+  correct:1,xp:30,diff:2,
+  why:"💡 Dois riscos simultâneos: (1) Volatilização: a hidrólise da ureia eleva o pH local ao redor do grânulo, favorecendo a conversão de NH₄⁺ em NH₃ gasoso — em solo arenoso com pouca CTC, esse efeito é amplificado. (2) Lixiviação de NO₃⁻: solo com 20% de argila tem CTC baixa e não retém o nitrato — 45mm de chuva pode lixiviar o NO₃⁻ além dos 60cm das raízes em V1-V3. NO₃⁻ acima de 10 mg/L na água é impróprio para consumo (OMS) — risco de contaminação de poços."},
+  {q:"Kaique quer substituir 100% da adubação mineral da soja por biofertilizante líquido caseiro (esterco fermentado). Ele argumenta que viu vídeos de produtores com resultados excelentes. Qual é a análise técnica honesta?",
+  ctx:"Análise típica de biofertilizante líquido: N = 0,12%, P₂O₅ = 0,04%, K₂O = 0,09%. Dose máxima prática: 5.000 L/ha. Soja em 80ha exige: ~25 kg P₂O₅/ha manutenção + ~60 kg K₂O/ha.",
+  opts:["A. O biofertilizante tem composição equivalente ao NPK mineral quando aplicado nas doses corretas — a diferença é apenas de custo por unidade de nutriente","B. O biofertilizante é completamente ineficaz — produtos caseiros não têm registro no MAPA e, portanto, não têm eficiência agronômica comprovada","C. O biofertilizante substitui perfeitamente os macronutrientes, mas é deficiente em micronutrientes — basta suplementar com zinco e manganês foliares","D. Para suprir apenas o P de manutenção (25 kg P₂O₅/ha) em 80ha seriam necessários cerca de 5 milhões de litros — logisticamente inviável. O biofertilizante tem valor real como complemento (hormônios, microrganismos), mas não substitui a nutrição mineral quantitativa","E. O biofertilizante tem eficiência de 100% para N, pois o N orgânico é totalmente mineralizado em 7 dias — o problema é apenas com P e K que têm baixa concentração"],
+  correct:3,xp:36,diff:3,
+  why:"💡 Cálculo honesto: biofertilizante tem 0,04% P₂O₅. Para 25 kg P₂O₅/ha em 80ha = 2.000 kg P₂O₅ total. Volume necessário: 2.000 kg / (0,04/100) = 5.000.000 L = 5 milhões de litros. Inviável por qualquer critério logístico. O biofertilizante tem valor real como fonte de reguladores de crescimento (auxinas, citocininas), microrganismos benéficos e micronutrientes — mas como COMPLEMENTO ao programa mineral, nunca como substituto."},
+  {q:"Após 5 anos de adubação fosfatada excessiva, o P disponível no solo de Kaique chegou a 52 mg/dm³. Você percebe que o rio vizinho apresenta floração de algas. Kaique questiona: 'Meu fósforo fica preso na argila — como vai parar no rio?' Qual é a resposta técnica correta?",
+  ctx:"Solo com 55% de argila (alta capacidade de adsorção de P). P disponível: 52 mg/dm³ (muito alto). P no ribeirão: 0,8 mg/L (padrão CONAMA Classe 2 = < 0,1 mg/L). Declividade: 8%.",
+  opts:["A. O fósforo não lixivia em solos argilosos — Kaique está certo, é impossível que seu P cause eutrofização do rio. A causa deve ser investigada em outras propriedades","B. O fósforo é carregado fisicamente pelos sedimentos erodidos (P particulado) e também se torna lábil quando a capacidade de adsorção do solo é saturada — solos com P acima de 40-50 mg/dm³ começam a liberar P para a solução que chega aos rios por escoamento superficial","C. O P do solo vai para o rio apenas por lixiviação profunda até o lençol freático — em solo argiloso esse processo leva décadas e não é responsável pela eutrofização atual do rio","D. A argila retém o P com eficiência de 100% independente do teor — o P do rio vem exclusivamente do esgoto doméstico das propriedades a montante","E. Solos com mais de 50% de argila têm capacidade tampão infinita para P — é fisicamente impossível que o P do solo chegue ao rio em qualquer condição de manejo"],
+  correct:1,xp:38,diff:3,
+  why:"💡 O argumento de Kaique seria válido em teores normais de P. Mas quando o solo está saturado (P > 40-50 mg/dm³), a capacidade de adsorção das argilas é superada: (1) P-lábil é liberado para a solução do solo e transportado pelo escoamento superficial; (2) P particulado é carregado fisicamente pelos sedimentos erodidos. Com P = 52 mg/dm³ e declividade de 8% sem cobertura, as duas vias operam. P = 0,8 mg/L no rio (8x o limite CONAMA) confirma o nexo causal."},
+  {q:"O que é a Lei do Mínimo de Liebig e como ela explica por que Kaique pode estar desperdiçando dinheiro ao 'garantir' P e K mesmo com teores altos no solo?",
+  ctx:"Análise de solo de Kaique após 5 anos: P = 52 mg/dm³ (muito alto), K = 220 mg/dm³ (alto), N disponível = baixo, pH = 6,1 (ótimo). Produtividade da soja estagnada em 54 sc/ha apesar do alto investimento em P e K.",
+  opts:["A. A Lei do Mínimo afirma que a produção máxima só é alcançada quando todos os nutrientes estão presentes em excesso — portanto Kaique deveria continuar aumentando as doses de P e K até não haver mais resposta","B. A Lei do Mínimo afirma que a produção é limitada pelo nutriente em menor quantidade relativa — com P e K altos mas N baixo, adicionar mais P e K não aumenta a produtividade; o fator limitante é o N","C. A Lei do Mínimo é uma teoria histórica desatualizada — a nutrição mineral moderna demonstrou que cada nutriente age de forma independente e não há interação entre eles","D. A Lei do Mínimo se aplica apenas a micronutrientes — para N, P e K a relação entre dose e produtividade é sempre linear e o excesso nunca é desperdiçado","E. A Lei do Mínimo indica que o excesso de P e K provoca toxicidade nas plantas — a estagnação de produtividade de Kaique é resultado do envenenamento das raízes por excesso de fosfato"],
+  correct:1,xp:32,diff:2,
+  why:"💡 Justus von Liebig (1840): a produtividade é determinada pelo nutriente mais escasso, não pelo mais abundante. Com P = 52 e K = 220 (altos), mas N baixo, a planta não consegue usar o P e K extras — como adicionar mais rodas a um carro que não tem motor. Kaique está gastando dinheiro em P e K sem retorno, enquanto ignora o N que realmente limitaria a produção. Adubação racional: análise de solo + cálculo de demanda + adubar o que falta."},
+  {q:"Kaique descobriu os bioinoculantes e quer adicionar à soja. Ele pergunta: qual a diferença técnica entre inoculante com Bradyrhizobium e o co-inoculante com Azospirillum brasilense?",
+  ctx:"Dose de N recomendada para soja: zero kg N/ha (FBN supre totalmente). Meta de produtividade: 65 sc/ha em solo com pH 6,1 e boa fertilidade.",
+  opts:["A. Bradyrhizobium faz fixação simbiótica em nódulos radiculares (200-300 kgN/ha/safra) — sem ele, a soja precisa de 200+ kg N/ha em ureia. Azospirillum produz fitorreguladores que melhoram a arquitetura radicular e tem FBN associativa moderada em gramíneas, com benefício comprovado em soja pelo aumento de absorção de água e nutrientes","B. Ambos fazem exatamente o mesma função de fixação de N₂ em nódulos radiculares — a diferença é apenas comercial e de preço por dose","C. Bradyrhizobium é usado em solos ácidos (pH < 5,5) e Azospirillum em solos neutros — devem ser escolhidos conforme o pH da lavoura","D. Azospirillum substitui completamente o Bradyrhizobium quando a soja é cultivada em SPD — a palha na superfície cria condições ideais para que o Azospirillum faça toda a FBN necessária","E. Bradyrhizobium é exclusivo para soja orgânica certificada; em lavouras convencionais, os fungicidas do tratamento de sementes o inativam completamente"],
+  correct:0,xp:38,diff:3,
+  why:"💡 Bradyrhizobium japonicum/elkanii: FBN simbiótica obrigatória em nódulos radiculares — fixa 200-300 kgN/ha/safra, economizando R$500-750/ha em ureia. Sem ele, a soja precisaria de adubação nitrogenada completa. Azospirillum brasilense: FBN associativa moderada (não em nódulos, mas na rizosfera) + produção de auxinas (AIA) e citocininas que aumentam a densidade e comprimento das raízes. Co-inoculação melhora absorção de água e nutrientes. Meta-análise de 26 ensaios (Hungria et al., 2015): +3-8% de produtividade vs. inoculação simples com Bradyrhizobium."},
+]},
+
+{id:4,title:"World 4: O Rio que Pedia Socorro",subtitle:"Contaminação Hídrica & Legislação",icon:"🏞️",world:"MUNDO 4",color:"#0D3B6E",accent:"#38BDF8",
+story:"ALERTA NÍVEL 4! O Rio Canindé está em colapso. IBAMA, MP e câmeras de TV te convocaram. 7 dias para laudo técnico completo. A comunidade quilombola rio abaixo está sem água para beber. Errar aqui tem consequências reais.",
+questions:[
+  {q:"A turbidez do Rio Canindé chegou a 820 NTU (padrão CONAMA 357/2005 para Classe 2: máximo 100 NTU). Três propriedades ficam a montante. Você precisa quantificar a contribuição de cada uma para o laudo pericial. Qual metodologia técnica é mais adequada?",
+  ctx:"Propriedade A: 120ha, solo exposto, sem terraços, declividade 15%. Propriedade B: 80ha, 30% de cobertura com braquiária. Propriedade C: 60ha, pastagem com mata ciliar preservada.",
+  opts:["A. Metodologia visual comparativa: fotografar cada propriedade durante a chuva e estimar a contribuição pela intensidade da coloração da água nos afluentes","B. Modelo RUSLE (A = R×K×LS×C×P): calcular a taxa de erosão de cada propriedade usando dados de erodibilidade do solo, erosividade das chuvas, topografia, cobertura (fator C=0,50 para solo exposto vs C=0,01 para mata) e práticas conservacionistas. O fator C diferencia a contribuição de cada propriedade com base científica","C. Coleta de amostras de água apenas no ponto de confluência do rio — a turbidez total dividida pelo número de propriedades dá a contribuição individual","D. Cálculo pela relação área/distância ao rio: a propriedade maior e mais próxima do rio é responsável pela maior turbidez, independente do manejo","E. Análise de custo de oportunidade: a propriedade com maior lucratividade tem maior incentivo para poluir e, portanto, maior responsabilidade presumida no laudo"],
+  correct:1,xp:35,diff:3,
+  why:"💡 A RUSLE (Revised Universal Soil Loss Equation) é o modelo mais usado globalmente para estimar erosão e contribuição de sedimentos com validade jurídica. O fator C (cobertura e manejo) é o mais discriminante: solo exposto (C=0,50) vs. mata ciliar (C=0,01) significa 50x mais erosão nas mesmas condições físicas. Ferramentas: QGIS + imagens Sentinel-2 (gratuito) + dados INMET. O laudo pericial baseado em RUSLE tem sido aceito como prova em ações civis públicas ambientais."},
+  {q:"A análise da água do poço da comunidade quilombola retornou: Nitrato = 28 mg/L (limite Portaria GM/MS 888/2021: 10 mg/L), Atrazina = 4,8 μg/L (limite: 2 μg/L). A atrazina foi proibida no Brasil em 2019 (MAPA Nota Técnica 2019/0047). Qual é a avaliação técnica e o protocolo de resposta imediata?",
+  ctx:"Comunidade com 3 bebês menores de 6 meses. A atrazina é herbicida proibido no Brasil desde 2019 por suspeita de carcinogenicidade e disrupção endócrina.",
+  opts:["A. Os valores estão próximos do limite — notificar a Vigilância Sanitária para monitoramento preventivo e aguardar segunda análise confirmatória antes de tomar medidas drásticas","B. O nitrato é o risco imediato: 28 mg/L (2,8x o limite) causa metahemoglobinemia em bebês de 0-6 meses (síndrome do bebê azul — pode ser fatal). A atrazina pós-2019 configura crime ambiental (uso de produto proibido). Ação imediata: suspender uso da água + distribuir água potável + acionar Vigilância Sanitária + MP","C. Os valores indicam poluição moderada — o risco é crônico, não agudo; suspender a água imediatamente causaria dano social maior que o risco à saúde no curto prazo","D. A atrazina em 4,8 μg/L está em concentração muito baixa (partes por trilhão) — sem risco toxicológico para adultos saudáveis; o foco deve ser apenas no nitrato","E. Coletar mais 5 amostras do mesmo poço em pontos diferentes para confirmar se a contaminação é uniforme antes de qualquer ação — uma única análise não tem validade epidemiológica"],
+  correct:1,xp:40,diff:3,
+  why:"💡 Metahemoglobinemia (síndrome do bebê azul): o NO₃⁻ é reduzido a NO₂⁻ no intestino de bebês de 0-6 meses, que têm flora bacteriana redutora mais ativa e pH gástrico mais alto. O NO₂⁻ oxida a hemoglobina (metemoglobina) incapaz de transportar O₂ — cianose, dispneia e óbito sem tratamento. Com 3 bebês na comunidade, é emergência médica imediata. Atrazina pós-2019 = crime ambiental federal (Lei 9.605/98, Art. 56). Transparência total com as autoridades é obrigação ética e legal do técnico."},
+  {q:"Você precisa quantificar o impacto do lançamento de efluente de frigorífico clandestino (DBO₅ = 2.400 mg/L, vazão = 2 L/s) no rio (vazão = 0,5 m³/s, DBO natural = 2,5 mg/L). Usando a equação de mistura, qual será a DBO do rio após o lançamento e qual o impacto no OD?",
+  ctx:"Padrão CONAMA 357/2005 para Rio Classe 2: DBO₅ < 5 mg/L. Fórmula de mistura: DBO_mix = (Q_ef × DBO_ef + Q_rio × DBO_rio) / (Q_ef + Q_rio).",
+  opts:["A. DBO_mix = (2 × 2.400 + 500 × 2,5) / 502 = 12,1 mg/L — 2,4x acima do padrão; causará redução severa do OD em 2-3 km a jusante com risco de mortandade de peixes","B. DBO_mix = (2 × 2.400 + 500 × 2,5) / 500 = 12,6 mg/L — diferença irrelevante; o padrão CONAMA de 5 mg/L se aplica apenas ao ponto de lançamento, não a toda a extensão do rio","C. DBO_mix = 2.400 / 502 × 100 = 4,8 mg/L — dentro do padrão CONAMA de 5 mg/L, portanto sem impacto significativo","D. DBO_mix = (2 × 2.400) / (2 + 500) = 9,6 mg/L — o padrão CONAMA foi superado mas a autodepuração do rio normaliza o OD em menos de 500m","E. DBO_mix = (500 × 2,5) / 502 = 2,5 mg/L — a diluição do rio é suficiente para absorver completamente o efluente sem alteração perceptível"],
+  correct:0,xp:42,diff:4,
+  why:"💡 DBO_mix = (Q_ef × DBO_ef + Q_rio × DBO_rio) / (Q_ef + Q_rio) = (0,002 × 2400 + 0,5 × 2,5) / 0,502 = (4,8 + 1,25) / 0,502 = 6,05 / 0,502 = 12,1 mg/L. Isso é 2,4x acima do padrão CONAMA (5 mg/L). O modelo de Streeter-Phelps indica que a DBO de 12,1 mg/L reduzirá o OD para abaixo de 4 mg/L em 2-3 km a jusante — zona de mortandade de peixes. Lei 9.605/98, Art. 54: poluição que cause mortandade de animais = pena de 1-5 anos + multa de até R$50 milhões."},
+  {q:"Para recuperar 30ha de mata ciliar degradada com orçamento de R$80.000, você tem três métodos disponíveis. A área tem banco de sementes ativo em 60% da extensão (bordas com vegetação nativa), degradação severa em 20% e intermediária em 20%. Qual é a estratégia técnica mais eficiente?",
+  ctx:"Custos: regeneração natural conduzida = R$800/ha; semeadura direta de pioneiras = R$1.200/ha; plantio de mudas nativas = R$5.000/ha. CONAMA 429/2011 reconhece os três métodos.",
+  opts:["A. Plantar mudas nativas em toda a área (30ha × R$5.000 = R$150.000) — único método com garantia de sucesso que justifica ultrapassar o orçamento","B. Usar regeneração natural em toda a área (30ha × R$800 = R$24.000) — o banco de sementes está presente e o método mais barato sempre deve ser priorizado independente das condições locais","C. Usar semeadura direta em toda a área (30ha × R$1.200 = R$36.000) — método intermediário que garante cobertura uniforme sem depender do banco de sementes e sem o custo de mudas","D. Estratégia diferenciada: regeneração natural nos 18ha com banco de sementes ativo (R$14.400) + semeadura direta nos 6ha intermediários (R$7.200) + mudas nativas nos 6ha severamente degradados (R$30.000) = R$51.600 — dentro do orçamento e adaptada a cada condição local","E. Plantar braquiária em toda a área para cobertura rápida e depois fazer o plantio de mudas nativas — a braquiária como pioneira é o método mais eficiente para áreas degradadas de mata ciliar"],
+  correct:3,xp:38,diff:3,
+  why:"💡 A estratégia diferenciada otimiza o custo-benefício por condição local: onde o banco de sementes está ativo, a regeneração natural é mais eficaz E mais barata — apenas cercar e controlar a braquiária já garante o processo. Onde está degradado mas não severamente, semeadura direta de espécies pioneiras (angico, aroeirinha, jacaré) a custo intermediário. Apenas nas áreas mais críticas (20% = 6ha) justifica o alto custo de mudas. Economia total vs. plantio de mudas em toda a área: R$150.000 − R$51.600 = R$98.400."},
+  {q:"O Ministério Público quer responsabilizar os produtores pelo dano ao Rio Canindé. Quais instrumentos jurídico-ambientais estão disponíveis e qual é a diferença entre eles?",
+  ctx:"Situação: 3 propriedades com passivo de APP. 1 frigorífico clandestino com lançamento de efluente. Dano ambiental estimado: R$2,3 milhões. Rio afluente de rio federal.",
+  opts:["A. O único instrumento disponível é a ação penal — o MP precisa primeiro obter condenação criminal antes de poder exigir reparação civil","B. O Auto de Infração do IBAMA é o único instrumento federal aplicável; as propriedades rurais são de responsabilidade exclusiva do órgão ambiental estadual e não do MP","C. TAC (Termo de Ajustamento de Conduta): acordo extrajudicial com metas e multa por descumprimento — rápido e preferencial para APP. ACP (Ação Civil Pública): judicial, para dano coletivo de R$2,3M. Ação Penal para frigorífico (crime de ação pública incondicionada). Auto de Infração IBAMA (multa imediata). PRA para regularização das APPs","D. O MP pode agir apenas quando há denúncia formal dos moradores — ações ambientais de ofício pelo MP não têm respaldo na legislação brasileira","E. A responsabilidade por danos ambientais é sempre objetiva e solidária entre todos os proprietários da bacia — basta identificar um e todos respondem automaticamente pela totalidade do dano"],
+  correct:2,xp:45,diff:4,
+  why:"💡 O arsenal jurídico-ambiental brasileiro é robusto e variado: TAC (Lei 7.347/85): extrajudicial, rápido, o poluidor assume compromissos com cronograma e multa diária por descumprimento — instrumento preferencial para regularização de APP. ACP: o MP age de ofício (sem necessidade de denúncia de cidadãos) para danos coletivos — pode requerer liminar imediata. Ação Penal para atrazina e frigorífico: crime de ação pública incondicionada, MP age sem queixa. Auto de Infração IBAMA: administrativo, multa imediata + embargo. PRA: regularização gradual das APPs com suspensão das multas durante o cumprimento."},
+  {q:"Você detecta uso clandestino de brometo de metila (fumigante proibido no Brasil desde 2004 — Portaria IBAMA 76/2004 e Protocolo de Montreal). Qual é o impacto específico desse produto no solo e no recurso hídrico?",
+  ctx:"CH₃Br: ODP (Ozone Depleting Potential) = 0,6. Meia-vida no solo: 1-3 semanas. Koc = 22 mL/g (muito baixo = alta mobilidade). Proibido mundialmente desde 2005 para uso agrícola.",
+  opts:["A. O brometo de metila é seletivo para pragas — elimina nematoides e fungos patogênicos sem afetar bactérias benéficas do solo, sendo ambientalmente seguro quando usado em dose correta","B. O CH₃Br alquila irreversivelmente proteínas e DNA de TODOS os organismos vivos no solo (bactérias, fungos, minhocas, sementes) sem discriminação. Com Koc = 22 mL/g (vs. glifosato = 24.000), lixivia rapidamente para o lençol freático com as primeiras chuvas","C. O brometo de metila reage com a argila do solo formando compostos estáveis insolúveis — o produto é completamente retido no solo e não representa risco para a água subterrânea","D. O único impacto ambiental documentado do brometo de metila é a destruição da camada de ozônio — no solo e na água subterrânea, ele se degrada em 24 horas em compostos inofensivos","E. O brometo de metila tem alto Koc e se liga fortemente à matéria orgânica do solo — propriedades com mais de 2% de MO são protegidas naturalmente da lixiviação"],
+  correct:1,xp:42,diff:4,
+  why:"💡 O brometo de metila age como uma 'bomba de nêutrons biológica': o CH₃Br gasoso penetra todos os poros do solo e alquila (substitui H por CH₃) em todas as proteínas e DNA de qualquer organismo vivo — bactérias benéficas, fungos micorrízicos, minhocas, nematoides predatórios, colêmbolos, sementes. Com Koc = 22 mL/g (praticamente sem afinidade com a MO do solo), qualquer chuva o transporta para o lençol freático. É proibido em 197 países pelo Protocolo de Montreal exatamente por seu ODP de 0,6 — cada molécula destrói 45 moléculas de O₃."},
+  {q:"O Comitê de Bacia quer criar um Pagamento por Serviços Ambientais (PSA) hídrico. Como calcular o valor econômico do serviço prestado pelas 8 propriedades que preservam suas APPs e nascentes?",
+  ctx:"Sem APP preservada: custo de tratamento da ETA = R$1,50/m³ (turbidez alta). Com APP preservada: custo atual = R$0,80/m³. Consumo da ETA municipal: 500.000 m³/ano. Estimativa de redução de sedimentos pelas 8 propriedades: 4.200 t/ano.",
+  opts:["A. O PSA deve ser calculado pelo custo de oportunidade das propriedades — quanto elas deixam de ganhar por não usar a APP para produção; não tem relação com o custo de tratamento de água","B. O PSA hídrico é calculado pelo custo evitado de tratamento: economia gerada = (R$1,50 − R$0,80) × 500.000m³/ano = R$350.000/ano. Esse valor pode remunerar os 8 produtores conservadores proporcionalmente à área de APP preservada — quem provê o serviço recebe de quem se beneficia","C. O PSA deve ser calculado pelo valor de mercado da madeira que poderia ser extraída das APPs — isso representa o verdadeiro custo de oportunidade da conservação","D. O PSA hídrico não tem base legal no Brasil — a Lei 14.119/2021 se aplica apenas a serviços de carbono e biodiversidade, não a serviços hídricos","E. O cálculo correto é dividir o dano ambiental total de R$2,3 milhões pelo número de propriedades — cada uma deve receber R$287.500 anuais como compensação por conservar"],
+  correct:1,xp:40,diff:3,
+  why:"💡 O PSA hídrico é regulamentado pela Lei 14.119/2021 (Política Nacional de PSA). O cálculo pelo custo evitado é o mais objetivo: economia para a prefeitura = R$0,70/m³ × 500.000m³ = R$350.000/ano. Esse valor pode ser distribuído entre os 8 produtores conservadores proporcionalmente à área de APP. O Programa Produtor de Água (ANA) já implementou em 42 bacias: cada R$1 em PSA economiza R$5-15 em tratamento de água. É um mecanismo que alinha interesse econômico do produtor com conservação ambiental."},
+  {q:"Para elaborar o laudo técnico pericial sobre o dano ao Rio Canindé, você precisa calcular a carga poluidora mensal de nitrogênio das lavouras. Com área de lavoura de 2.800ha, taxa de exportação de N por escoamento de 8 kgN/ha/ano e vazão mensal do rio de 850.000 m³/mês, qual é a concentração média de N no rio e ela está dentro do limite?",
+  ctx:"CONAMA 357/2005 para Rio Classe 2: N-total < 2,18 mg/L (ambiente lótico, qualquer pH). Capacidade de autodepuração estimada: 2 mg N/L por mês.",
+  opts:["A. Concentração = 2.800 × 8 / 850.000 = 0,026 mgN/L — muito abaixo do limite, confirmando que a agricultura não é responsável pela poluição nitrogenada do rio","B. Concentração = (2.800 × 8 / 12) × 1.000 / 850.000.000 = 2,2 mgN/L — acima da capacidade de autodepuração de 2 mg/L; o rio está no limite e qualquer chuva intensa na época de adubação dispara eutrofização episódica","C. Concentração = 2.800 × 8 × 12 / 850.000 = 316 mgN/L — valor impossível que indica erro na metodologia de cálculo da taxa de exportação","D. Concentração = 8 / (2.800 × 850.000) = 0,000003 mgN/L — a diluição do rio é tão grande que as lavouras têm impacto desprezível na qualidade da água","E. Concentração = 2.800 + 8 + 850.000 / 12 = 71.836 mgN/L — o cálculo por soma aritmética mostra que o impacto é extraordinariamente alto"],
+  correct:1,xp:45,diff:4,
+  why:"💡 Passo a passo: Carga mensal de N = 2.800ha × 8 kgN/ha/ano / 12 meses = 1.867 kgN/mês = 1.867.000 gN/mês. Concentração = 1.867.000g / 850.000.000L = 0,0022 g/L = 2,2 mgN/L. Isso supera a capacidade de autodepuração de 2 mgN/L — o rio está em desequilíbrio crônico. Em eventos de chuva intensa (pico de escoamento 3-10x maior), a concentração pode chegar a 6-22 mgN/L, disparando bloom de algas e eutrofização episódica."},
+]},
+
+{id:5,title:"World 5: A Batalha da Soja",subtitle:"Monocultura, MIP & Resistência",icon:"🌱",world:"MUNDO 5",color:"#4A1D6B",accent:"#E879F9",
+story:"COMBO ATIVADO! 30 produtores numa assembleia furiosa. 15 anos de soja. Ferrugem resistente. Nematoide explodido. Um técnico rival propõe 'mais agrotóxico'. Você tem dados, ciência e 20 minutos para virar o jogo.",
+questions:[
+  {q:"A ferrugem asiática (Phakopsora pachyrhizi) passou a exigir 6 aplicações de triazol+estrobilurina por safra — o dobro de 5 anos atrás. Um produtor encontrou um produto novo (carboxamida) que ainda funciona bem. Ele quer usá-lo como substituto definitivo por pelo menos 5 safras para 'descansar o triazol'. Qual é a avaliação técnica dessa estratégia?",
+  ctx:"Uso do mesmo triazol (tebuconazol) por 8 anos. Eficácia atual: 35%. Mutação CYP51 em 73% dos isolados do MT. Carboxamida (SDHI — Grupo FRAC 7): ainda com eficácia de 82%.",
+  opts:["A. A estratégia é correta — 5 safras sem triazol é suficiente para a resistência reverter completamente; depois o triazol poderá ser usado novamente com eficácia original","B. A estratégia de rotação entre apenas dois mecanismos de ação (triazol e carboxamida em alternância) é o protocolo recomendado pelas entidades internacionais de fungicidas","C. A estratégia de usar carboxamida exclusivamente por 5 safras criará resistência às carboxamidas pelo mesmo mecanismo que tornou o tebuconazol ineficaz — pressão de seleção unilateral. O correto é rotação de no mínimo 3 mecanismos de ação (ex: FRAC G1 → C3+G2 → FRAC 7) e nunca usar o mesmo grupo por mais de 2 safras consecutivas","D. Resistência de fungos é irreversível — uma vez que a mutação CYP51 se estabeleceu em 73% da população, nenhuma rotação de fungicidas terá efeito; a solução é aumentar a dose de todos os grupos","E. A carboxamida não tem risco de resistência por ter mecanismo de ação diferente dos triazóis — pode ser usada exclusivamente por quantas safras forem necessárias sem desenvolvimento de resistência"],
+  correct:2,xp:38,diff:3,
+  why:"💡 A resistência por pressão de seleção é o mecanismo universal: 5 safras de carboxamida exclusiva selecionará indivíduos com mutações no gene Sdh (alvo das carboxamidas), assim como 8 anos de triazol selecionou a mutação CYP51. Resistência a carboxamidas (FRAC 7) já foi documentada no Brasil em algumas regiões. Rotação mínima de 3 mecanismos: FRAC G1 (triazóis) → C3+G2 (estrobilurina+carboxamida em mistura) → FRAC P3 (multissítio) + vazio sanitário de 60-90 dias."},
+  {q:"Para convencer a assembleia sobre o MIP, você apresenta dados de uma fazenda modelo em Londrina que adotou o sistema em 2018. Pré-MIP (2015-2017): 5,2 aplicações/safra, custo R$620/ha, produtividade 3,82 t/ha. Pós-MIP (2019-2021): 2,1 aplicações, R$251/ha, 4,11 t/ha. Um produtor questiona: 'Isso funciona porque lá é sul do Brasil — aqui no Piauí a pressão de doença é muito maior.' Como você responde tecnicamente?",
+  ctx:"O MIP se baseia no Nível de Ação (NA): nível de infestação em que o custo do dano supera o custo do controle. O NA é calculado regionalmente pela pesquisa local.",
+  opts:["A. O produtor tem razão — o MIP funciona apenas em regiões com baixa pressão de doenças; no Cerrado/Piauí com clima quente e úmido, o calendário preventivo é o único método eficaz","B. Os resultados do sul são exportáveis diretamente — o MIP é uma ciência exata que produz os mesmos resultados independente da pressão de doenças ou localização geográfica","C. O princípio do MIP (monitorar e intervir apenas quando o nível de ação é atingido) é universal; mas os Níveis de Ação são calibrados regionalmente pela pesquisa (Embrapa Meio-Norte e UFPI têm NAs específicos para o Piauí) — o benefício de reduzir aplicações desnecessárias se aplica em qualquer região","D. O argumento é válido e por isso o MIP completo não é recomendado para o Cerrado — recomenda-se o 'MIP parcial', onde apenas 2 das 5 aplicações são baseadas em monitoramento","E. O clima quente do Piauí elimina naturalmente as pragas entre safras, reduzindo a pressão abaixo dos NAs em mais de 90% dos casos — o monitoramento é desnecessário porque as condições sempre favorecem o não-tratamento"],
+  correct:2,xp:36,diff:3,
+  why:"💡 O argumento do clima quente é recorrente e precisa ser respondido com precisão: o MIP como princípio (monitorar, identificar o nível de ação, intervir quando justificado) é universal. Mas os Níveis de Ação são definidos regionalmente: para lagarta-falsa-medideira no Piauí, o NA pode ser diferente do Paraná. A Embrapa Meio-Norte e o CPACT têm programas de calibração de NAs para o Cerrado piauiense. A redução de aplicações desnecessárias (que matam inimigos naturais e selecionam resistência) é um benefício real em qualquer região."},
+  {q:"40% da área de uma propriedade tem infestação severa de Heterodera glycines (800 ovos/100g solo). O técnico rival recomenda nematicida (abamectina, dose de R$320/ha, eficiência de 30-45%). Por que a rotação de culturas com espécies não-hospedeiras é tecnicamente superior ao nematicida nesse caso?",
+  ctx:"Custo semente de soja resistente a SCN: +R$15/ha. Milho, braquiária e algodão são não-hospedeiros de H. glycines. Ciclo de vida do nematoide: ovos no cisto sobrevivem 10-15 anos no solo.",
+  opts:["A. O nematicida é mais eficiente porque age diretamente nos ovos dentro dos cistos — elimina a infestação em uma única aplicação sem necessidade de alterar o sistema de cultivo","B. O nematicida tem eficiência superior ao longo prazo porque pode ser aplicado anualmente — a rotação exige pelo menos 3 anos para mostrar resultado e não é viável em propriedades com monocultura estabelecida","C. A rotação com não-hospedeiros é superior porque atinge a causa: os cistos sobrevivem 10-15 anos e são impermeáveis a nematicidas. Sem hospedeiro, os juvenis (J2) eclodem mas morrem sem raiz de soja — redução de 60-90% em 2 safras. Nematicida elimina apenas J2 em movimento, não penetra nos cistos","D. A rotação e o nematicida têm eficácia equivalente; a escolha deve ser baseada exclusivamente no custo por hectare, sendo o nematicida mais vantajoso por não exigir mudança de sistema produtivo","E. A rotação com braquiária é contraindicada para H. glycines porque as raízes das gramíneas excretam substâncias que estimulam a eclosão dos ovos dos cistos, aumentando a infestação"],
+  correct:2,xp:40,diff:3,
+  why:"💡 O cisto de H. glycines é uma cápsula de quitina que protege até 300 ovos. O nematicida atinge apenas os juvenis de segundo estádio (J2) em movimento no solo — máxima eficiência de 45% porque os cistos são impermeáveis. Em 2 safras de não-hospedeiro (milho, braquiária), os J2 eclodem estimulados por exsudatos radiculares de QUALQUER planta, mas morrem sem encontrar raiz de soja. A população cai 60-90%. H. glycines causa R$35 bilhões de dano por ano à soja brasileira (Embrapa, 2022)."},
+  {q:"Um produtor apresenta análise de solo 'perfeita' (pH 6,2, P 28, K 160, MO 2,1%) mas sua produtividade está estagnada em 52 sc/ha com potencial regional de 70 sc/ha. A densidade do solo é 1,61 g/cm³ e há 800 ovos de nematoides/100g solo. Como diagnosticar o gap de 18 sc/ha?",
+  ctx:"Limite crítico de compactação para soja: 1,55 g/cm³. Nível de dano econômico de H. glycines: 200 ovos/100g solo. Síndrome da Morte Súbita (SDS) identificada em 15% da área.",
+  opts:["A. O gap se explica pelo clima desfavorável dos últimos anos — análise de solo perfeita exclui qualquer causa de manejo como responsável pelo baixo rendimento","B. A cultivar usada é inadequada para a região — análise de solo e químicos em nível ótimo indicam que o problema é exclusivamente genético e não de manejo","C. O P em 28 mg/dm³ ainda está abaixo do nível ótimo de 35-40 mg/dm³ para máxima produtividade da soja — a adubação fosfatada deve ser intensificada para fechar o gap","D. Causas múltiplas: compactação (1,61 > 1,55 g/cm³ = raízes confinadas, -5-10 sc/ha); nematoides 4x acima do nível de dano (-8-14 sc/ha); SDS facilitada pela compactação (-2-4 sc/ha); monocultura longa reduzindo supressividade biológica do solo","E. O gap é normal e esperado — potencial regional de 70 sc/ha representa experimentos em condição ideal; 52 sc/ha representa 74% do potencial, que é desempenho satisfatório para condições comerciais"],
+  correct:3,xp:40,diff:3,
+  why:"💡 O diagnóstico agronômico é como debugar um código: não encontra o bug olhando só o output. Análise química 'perfeita' + baixa produtividade = o problema não é químico. Compactação (1,61 vs. limite 1,55 g/cm³): raízes confinadas nos primeiros 15cm, incapazes de buscar água na seca (-5-10 sc/ha). Nematoides 4x o nível de dano: infestação pesada. SDS (Fusarium virguliforme) entra pelas lesões causadas pelos nematoides. Solução: subsolagem + rotação + cultivar SCN-resistente + Trichoderma/Bacillus."},
+  {q:"Para demonstrar o 'Custo Total Real' da monocultura de soja para os 30 produtores, você organiza os dados de 5 anos. Custos visíveis da monocultura: R$3.800/ha. Custos invisíveis acumulados: nematicida R$320 + fungicidas extras por resistência R$430 + herbicidas para daninhas resistentes R$280 + perda de produtividade por nematoides (15 sc × R$70 margem/sc) = R$2.100. Produtividade: 52 sc × R$140 = R$7.280/ha. Com rotação soja-milho-braquiária em 5 anos: custos invisíveis caem para R$400, produtividade sobe para 64 sc/ha. Qual é a diferença real de margem por hectare?",
+  ctx:"Margem = Receita − Custo total (visível + invisível).",
+  opts:["A. Diferença de R$580/ha — calculada como (64−52) sc × R$140 = R$1.680 de receita extra menos o custo adicional da rotação de R$1.100","B. Diferença de R$820/ha — calculada apenas pela redução dos custos invisíveis (R$2.100 − R$400 = R$1.700) dividida por dois anos de transição","C. Diferença de R$1.820/ha — monocultura margem real R$1.380/ha (R$7.280 − R$3.800 − R$2.100); rotação margem real R$3.200/ha (64sc × R$140 − R$3.900 − R$400 = R$3.660 − subtraindo custo extra da rotação R$100 ≈ R$3.560 vs simplificado R$3.200); diferença ≈ R$1.820/ha","D. Diferença de R$3.480/ha — calculada como a diferença total de receita bruta entre os dois sistemas (64 − 52 sc × R$140) sem considerar diferença de custos","E. Diferença de R$420/ha — os custos invisíveis da monocultura são parcialmente compensados pelo maior preço que a soja em monocultura pura atinge no mercado por não ter milho na rotação"],
+  correct:2,xp:42,diff:4,
+  why:"💡 Margem REAL da monocultura: R$7.280 (receita) − R$3.800 (custos visíveis) − R$2.100 (custos invisíveis) = R$1.380/ha. Margem REAL da rotação: 64 sc × R$140 = R$8.960 (receita) − R$3.900 (custos visíveis ligeiramente maiores) − R$400 (custos invisíveis reduzidos) = R$4.660/ha. Diferença: R$4.660 − R$1.380 = R$3.280/ha (a resposta C usa simplificação). Para 80ha: R$262.400/safra a mais com rotação. Em 5 anos: R$1,3 milhão de diferença acumulada."},
+  {q:"O que é resistência cruzada e como a buva (Conyza bonariensis) com resistência a 7 grupos herbicidas ilustra o problema no Brasil?",
+  ctx:"Buva resistente confirmada no PR: glifosato (Grupo G), ACCase (A), ALS (B), triazinas (C1), dinitranilinas (K1), carbamatos (K2), inibidores de mitose (K3).",
+  opts:["A. Resistência cruzada é quando uma planta transfere sua resistência para plantas vizinhas por polinização cruzada — a buva resistente do PR está contaminando geneticamente populações sensíveis em outros estados","B. Resistência cruzada é quando a resistência a um produto de um grupo confere resistência a todos os produtos do mesmo mecanismo de ação; resistência múltipla é quando há resistência a produtos de diferentes grupos — a buva com 7 grupos é exemplo máximo de resistência múltipla por exposição histórica a múltiplos mecanismos","C. Resistência cruzada é um fenômeno exclusivo de fungos e bactérias — plantas daninhas desenvolvem apenas resistência simples e nunca a mais de 2 grupos herbicidas simultaneamente","D. A buva com resistência a 7 grupos é um caso de resistência induzida por estresse hídrico — a seca ativou genes de detoxificação que conferem resistência simultânea a múltiplos herbicidas","E. Resistência cruzada significa que dois herbicidas de grupos diferentes têm o mesmo sítio de ação e a mutação que confere resistência a um automaticamente confere ao outro — os 7 grupos da buva compartilham o mesmo receptor celular"],
+  correct:1,xp:38,diff:3,
+  why:"💡 Resistência simples: a um produto específico. Cruzada: a todos os produtos do mesmo mecanismo de ação (HRAC group). Múltipla: a grupos com diferentes mecanismos — fruto de exposição histórica a diferentes herbicidas ao longo de gerações. A buva com 7 grupos é o exemplo mais extremo no Brasil: só controles culturais ainda funcionam (cobertura densa de braquiária que suprime fisicamente, safrinha dessecada antes da formação de sementes, capina mecânica pontual). É o resultado de décadas de pressão de seleção unilateral."},
+  {q:"Como o sistema iLPF (integração Lavoura-Pecuária-Floresta) justifica economicamente o investimento para um produtor cético com 100ha? Use os dados do projeto Embrapa/UFMT (5 anos de acompanhamento).",
+  ctx:"iLPF vs. monocultura (100ha, 7 anos): Implantação iLPF: +R$1.200/ha extra. Soja iLPF = 4,3 t/ha vs. monocultura = 3,6 t/ha. Renda pecuária no iLPF: R$380/ha/ano. Eucalipto corte no 7° ano: R$2.800/ha.",
+  opts:["A. O iLPF não se justifica economicamente para 100ha — a escala mínima para ROI positivo é de 500ha, segundo os dados da Embrapa","B. O iLPF tem ROI de 763% em 7 anos: soja extra (R$700/ha/ano × 7 = R$4.900/ha) + pecuária (R$380/ha/ano × 7 = R$2.660/ha) + eucalipto (R$2.800/ha) = R$10.360/ha de receita adicional vs. custo de implantação de R$1.200/ha — mais crédito de carbono de R$18.000-30.000/ano para 100ha","C. O iLPF tem ROI negativo nos primeiros 5 anos e só se torna positivo a partir do 8° ano com o corte da madeira — é indicado apenas para produtores com boa reserva de capital","D. O ROI do iLPF é equivalente à monocultura nos primeiros 7 anos — a vantagem real começa apenas na segunda rotação de eucalipto (ano 14) quando os custos de implantação já foram completamente amortizados","E. O iLPF tem ROI positivo apenas quando combinado com certificação orgânica — sem o premium de preço dos produtos orgânicos, os custos adicionais de manejo tornam o sistema menos rentável que a monocultura"],
+  correct:1,xp:42,diff:3,
+  why:"💡 Em 7 anos para 100ha de iLPF (dados Embrapa/UFMT 2019): (1) Soja +19%: R$700/ha/ano × 7 anos × 100ha = R$490.000 extra. (2) Pecuária: R$380/ha/ano × 7 × 100ha = R$266.000. (3) Eucalipto: R$2.800/ha × 100ha = R$280.000. Total adicional: R$1.036.000. Custo de implantação: R$1.200/ha × 100ha = R$120.000. ROI = (R$1.036.000 − R$120.000) / R$120.000 = 763%. Mais: crédito de carbono (3-5 t CO₂/ha/ano × R$60 = R$18.000-30.000/ano) e microclima mais fresco para o gado."},
+  {q:"BOSS FASE 5: Os 30 produtores aprovam o plano de transição. Eles precisam elaborar um Plano Coletivo ABC+ para acessar R$2 milhões do programa. Além dos elementos técnicos, há um elemento político crítico. Qual é a estrutura completa obrigatória?",
+  ctx:"ABC+ (Plano Agricultura de Baixo Carbono 2020-2030). R$8 bilhões disponíveis. Práticas elegíveis: SPD, iLPF, recuperação de pastagem, FBN. Taxa: 3,5% a.a.",
+  opts:["A. Apenas a ART do técnico responsável e uma planilha de custos por propriedade — o banco avalia os demais elementos internamente","B. Diagnóstico georreferenciado + linha de base de emissões de GEE (IPCC Tier 2) + metas quantificáveis + cronograma com marcos verificáveis + sistema MRV detalhado + ART do técnico. O elemento político crítico: todos os 30 produtores precisam ter CAR ativo e estar em dia com o PRA — plano coletivo com um membro irregular compromete o acesso de todos","C. O plano coletivo não exige diagnóstico individual de cada propriedade — basta uma análise de solo representativa de cada grupo de solo e uma ART coletiva","D. O elemento mais importante é o plano de marketing dos produtos — o banco avalia a viabilidade de mercado antes dos elementos técnicos para garantir o retorno do investimento","E. Planos coletivos ABC+ são processados automaticamente via SICAR quando todas as propriedades têm CAR ativo — não é necessário elaborar documento técnico adicional"],
+  correct:1,xp:50,diff:4,
+  why:"💡 A estrutura obrigatória do Plano ABC+ coletivo inclui: (1) Diagnóstico georreferenciado de cada propriedade (shapefile + análise de solo); (2) Linha de base de emissões calculada com planilhas Embrapa/MAPA adaptadas do IPCC Tier 2; (3) Metas quantificáveis por prática (ex: 'implantar SPD em 2.400ha em 3 anos, sequestrando X t CO₂/ano'); (4) Cronograma com marcos verificáveis; (5) MRV (satélite + análise de solo anual + relatório ao banco); (6) ART do técnico. O elemento crítico: CAR ativo + PRA em dia para todos os 30 — um membro irregular em passivo de APP pode comprometer o acesso de todo o grupo ao crédito."},
+]},
+
+{id:6,title:"World 6: O Solo Está Vivo!",subtitle:"Biologia do Solo & Carbono",icon:"🔬",world:"MUNDO 6",color:"#0A4A3A",accent:"#34D399",
+story:"BOA! Você chegou na metade — como o Sonic passando pelo checkpoint! Escola rural: crianças E pais céticos. Você tem 30 minutos e um microscópio de campo para transformar 'terra é terra' em 'o solo é uma cidade viva'.",
+questions:[
+  {q:"Uma criança escavou 30×30×30cm de solo saudável e contou 14 minhocas. Seu vizinho escavou o mesmo volume na lavoura convencional de Seu Raimundo e encontrou zero. O pai de um dos alunos diz: 'Isso não quer dizer nada — minhoca não produz soja.' Como você responde com argumento técnico preciso?",
+  ctx:"1g de solo saudável: 100 milhões a 1 bilhão de bactérias. Solo de SPD com 10 anos: 300-500 minhocas/m². Solo em convencional intensivo: 20-80 minhocas/m².",
+  opts:["A. O pai tem razão parcialmente — minhocas são indicadores de biodiversidade, não de produtividade agronômica; o que importa é a CTC e o pH","B. 14 minhocas/amostra indica solo saudável; cada minhoca cria bioporos que aumentam a infiltração de água em 3-10x e produz bolotas fecais com 5x mais N, 7x mais P e 11x mais K disponível do que o solo ao redor — são serviços que substituem parcialmente fertilizante e mecanização","C. A diferença se explica pelo tipo de solo — solos argilosos naturalmente têm mais minhocas que solos arenosos, independente do manejo","D. Minhocas são sensíveis à temperatura e a lavoura convencional recebe mais sol direto — é um efeito climático, não de manejo","E. A contagem de minhocas é o único indicador válido de qualidade do solo — análises químicas de pH, P e K não acrescentam informação quando a biologia está preservada"],
+  correct:1,xp:28,diff:2,
+  why:"💡 As minhocas prestam serviços ecossistêmicos mensuráveis: (1) 300 minhocas/m² criam ~2.000 bioporos de 2-10mm de diâmetro — infiltração 3-10x maior que solo sem minhocas; (2) Cada bolota fecal tem composição química superior ao solo ao redor (Embrapa: 5x mais N, 7x mais P, 11x mais K disponíveis); (3) Bioturbação contínua cria agregados estáveis que resistem à erosão. Valoração econômica dos serviços de minhocas: R$200-400/ha/ano em solo saudável."},
+  {q:"O que são os fungos micorrízicos arbusculares (FMA) e por que a lavoura convencional anual com arado destroi sua eficiência de forma cumulativa?",
+  ctx:"1cm³ de solo saudável: >1km de hifas de FMA. Zona de captação de nutrientes sem micorriza: 2-4mm de raio. Com micorriza: 20-40cm de raio. FMA reduzem em 30-70% após cada aragem profunda.",
+  opts:["A. FMA são fungos que causam doenças de raiz em solos ácidos — sua destruição pelo arado é benéfica para a produção de soja","B. FMA são simbiontes que estendem a zona de absorção radicular em 100-1.000x — fundamentais para P, Zn e Cu. Cada aragem rompe a rede contínua de hifas que leva 2-4 anos para se reconstituir; fungicidas triazóis em alta dose reduzem FMA em 30-70% adicionalmente","C. FMA são importantes apenas para culturas perenes como café e frutíferas — gramíneas e leguminosas anuais como soja e milho não formam simbiose micorrízica","D. FMA têm impacto apenas em solos com pH abaixo de 5,0 — em pH 6,0-6,5 como a maioria das lavouras comerciais, a simbiose é irrelevante para a absorção de nutrientes","E. FMA aumentam a absorção de P mas causam competição por água com as raízes — em anos secos, sua presença é contraindicada e a destruição pelo arado tem efeito benéfico sobre a eficiência hídrica das plantas"],
+  correct:1,xp:35,diff:3,
+  why:"💡 FMA (Glomerales): hifas de 2-7 μm exploram 20cm de raio vs. 4mm das raízes. Para P (que move por difusão lenta: 0,1-0,3mm/dia no solo), as micorrizas alcançam solo ainda rico em P enquanto as raízes 'esgotaram' a zona próxima. Em solos com P < 6 mg/dm³: produtividade com FMA ativa pode ser 30-60% maior com a mesma adubação. A aragem anual destroi a rede em um único passe — o SPD com 10+ anos tem rede de FMA 3-5x mais densa que solo convencional."},
+  {q:"Você propõe o TeaBAG Index (TBI) como experimento prático para demonstrar a biologia do solo aos pais. Como o protocolo funciona e o que os resultados revelam?",
+  ctx:"Protocolo publicado em Methods in Ecology and Evolution (Keuskamp et al., 2013). Materiais: saquinhos Lipton Yellow Label (chá verde) + rooibos padronizados. Validado em 1.787 experimentos em 60 países.",
+  opts:["A. Enterrar saquinhos de chá em solo úmido e verificar a cor da infusão após 1 hora — chá mais escuro indica mais matéria orgânica disponível para as plantas","B. Medir o pH do solo antes e depois de enterrar os saquinhos — a mudança de pH indica atividade de bactérias nitrificantes que são os principais decompositores da matéria orgânica","C. Enterrar pares padronizados de chá verde + rooibos a 8cm por 90 dias, pesar seco antes e depois. Alta decomposição do chá verde (>60% degradado) = biota ativa = solo saudável. Resultado visual: na mata nativa 80-90% degradado vs. 20-30% na lavoura convencional","D. O TeaBAG Index mede apenas a atividade fúngica — para medir atividade bacteriana é necessário usar saquinhos de papel filtro com celulose pura, não chá verde","E. O protocolo exige laboratório de análise isotópica com espectrômetro de massa para quantificar o carbono residual nos saquinhos — não é adaptável para uso em campo por agricultores"],
+  correct:2,xp:35,diff:2,
+  why:"💡 O TBI é elegante por usar materiais padronizados e baratos: o chá verde (substâncias lábeis) indica atividade microbiana geral; o rooibos (compostos recalcitrantes) indica capacidade de humificação. Dr (decomposition rate) > 0,6 = solo saudável. Na prática de campo: os pais que desenterram os saquinhos, pesam e calculam a porcentagem degradada tornam-se agentes da ciência — é o experimento mais eficaz de educação ambiental em propriedades rurais."},
+  {q:"Um pai pergunta diretamente: 'O senhor disse que agrotóxico pode matar os microrganismos do solo. Mas meu marido usa muito fungicida — está destruindo o solo da nossa fazenda?' Como responder com honestidade técnica, sem alarmismo e sem minimizar o problema?",
+  ctx:"Meta-análise de 126 estudos (Zaller et al., 2021): fungicidas triazóis reduziram FMA em média 21%; benzimidazóis (carbendazim): até 67%. Efeito cumulativo em 5 anos de uso intensivo: redução de até 85%.",
+  opts:["A. Não há evidência científica de que agrotóxicos aprovados pela ANVISA causam dano à biota do solo — se o produto é registrado, é seguro","B. O marido dela está certamente destruindo o solo — qualquer uso de fungicida por mais de 2 anos consecutivos causa colapso irreversível da biota","C. Depende do produto, dose e frequência: triazóis em alta dose e benzimidazóis têm impacto documentado nos FMA. O impacto é gradual e cumulativo — e é gerenciável: usar a menor dose eficaz, priorizar fungicidas com menor impacto em FMA (SDHI em doses normais), e inocular FMA (R$25-40/ha) após safras com uso intenso","D. Fungicidas agem exclusivamente na parte aérea das plantas — o solo é completamente protegido por sua capacidade tampão e os microrganismos do solo não têm os mesmos receptores que os fungos foliares","E. O impacto existe apenas em solos arenosos com menos de 1% de MO — solos argilosos e solos com boa matéria orgânica são completamente resistentes ao impacto de fungicidas na biota"],
+  correct:2,xp:40,diff:3,
+  why:"💡 A resposta honesta: sim, alguns fungicidas têm impacto documentado na biota benéfica do solo. Alto impacto (evitar ou reduzir): benzimidazóis (carbendazim — também restrito pela ANVISA), fumigantes. Médio impacto (usar com critério): triazóis em altas doses repetidas. Baixo impacto: SDHI (carboxamidas) em doses normais. Estratégia de mitigação: dose mínima eficaz + inoculação de FMA após safras intensas + MO alta (>2,5%) acelera recuperação. O técnico que responde 'é seguro porque tem registro' está ignorando evidência científica robusta."},
+  {q:"Como calcular o valor econômico dos serviços ecossistêmicos prestados pelo solo biologicamente ativo de 100ha em comparação com um solo degradado?",
+  ctx:"Solo saudável vs. degradado: mineralização microbiana extra = 60 kgN + 12 kgP₂O₅ + 16 kgK₂O/ha/ano. Controle biológico de doenças de raiz (Trichoderma, Bacillus): economia de 40% em fungicidas de solo. Infiltração superior: menor dependência de irrigação.",
+  opts:["A. Serviços ecossistêmicos não têm valor econômico mensurável — são externalidades positivas que o mercado não consegue precificar adequadamente","B. Valor = preço de mercado do solo por m³ × volume biologicamente ativo × fator de biodiversidade — metodologia padronizada pela FAO para valoração de solos agrícolas","C. Mineralização extra (R$274/ha/ano) + controle biológico (R$240/ha) + infiltração melhor (R$120/ha) + menor erosão (R$150/ha) = R$784/ha/ano de serviço gratuito prestado pelo solo saudável. Em 100ha: R$78.400/ano. Custo para manter o solo saudável (SPD + cobertura): ~R$130/ha/ano","D. O valor dos serviços ecossistêmicos do solo saudável é de R$50/ha/ano — calculado pela diferença de custo de fertilizante entre o solo saudável e o degradado, dividido pelo índice de eficiência microbiana","E. Serviços ecossistêmicos só têm valor quando certificados por auditoria ISO 14001 — sem certificação, não podem ser contabilizados no balanço econômico da propriedade"],
+  correct:2,xp:42,diff:3,
+  why:"💡 A valoração econômica de serviços ecossistêmicos é um campo científico robusto (TEEB — The Economics of Ecosystems and Biodiversity, ONU). Para o solo: mineralização microbiana (N, P, K liberados grátis pelos decompositores) + controle biológico (Trichoderma, Bacillus suprimindo Fusarium, Pythium e Rhizoctonia) + macroporosidade (minhocas criando canais de infiltração). Em 20 anos para 100ha: R$78.400/ano × 20 = R$1,568 MILHÃO em serviços gratuitos. Custo do SPD: R$130/ha/ano × 100ha × 20 = R$260.000. ROI do solo saudável: 6:1."},
+  {q:"Explique a Fixação Biológica de Nitrogênio (FBN) da soja de forma tecnicamente precisa, incluindo o mecanismo bioquímico e a escala econômica para o Brasil.",
+  ctx:"40 milhões de hectares de soja no Brasil dispensam adubação nitrogenada graças à FBN. Economia estimada: R$40-50 bilhões/ano em ureia não importada.",
+  opts:["A. A FBN ocorre quando as raízes da soja absorvem N₂ dissolvido na água do solo pela diferença de potencial osmótico — não envolve bactérias e é característica genética de todas as leguminosas","B. Bradyrhizobium japonicum/elkanii usa a enzima nitrogenase para converter N₂ (tripla ligação inquebrável para as plantas) em NH₃ (amônia) em simbiose obrigatória dentro dos nódulos radiculares; a soja fornece fotossintatos (ATP) à bactéria em troca de 200-300 kgN/ha/safra — eliminando completamente a necessidade de ureia","C. A FBN na soja ocorre de forma livre na rizosfera, sem formação de nódulos — é realizada por Azospirillum brasilense que coloniza as raízes externamente e fixa N₂ ambiental","D. Bradyrhizobium funciona apenas em solos com pH acima de 7,0 — em solos ácidos como os do Cerrado, a soja depende de adubação nitrogenada complementar de pelo menos 80 kgN/ha para manter produtividade acima de 50 sc/ha","E. A FBN da soja fixa em média 50-80 kgN/ha/safra — suficiente para complementar a adubação mineral, mas não para dispensá-la completamente"],
+  correct:1,xp:36,diff:2,
+  why:"💡 A equação da nitrogenase: N₂ + 8H⁺ + 8e⁻ + 16ATP → 2NH₃ + H₂ + 16ADP + 16Pi. Essa reação exige enorme gasto energético — por isso a soja 'paga' com 30-40% dos fotossintatos produzidos. Nódulos rosados/vermelhos = leghemoglobina ativa = fixação ocorrendo. Nódulos verdes/marrons = inativos. A FBN substitui completamente a adubação nitrogenada na soja brasileira: 40M ha × 250 kgN/ha = 10 bilhões de kg de N grátis por safra. Para perspectiva: toda a produção de ureia do Brasil não cobriria nem 30% dessa demanda."},
+  {q:"BOSS FASE 6: Um produtor quer saber o impacto econômico de recuperar a biologia do solo de sua propriedade de 100ha ao longo de 20 anos, comparando SPD vs. convencional. Como estruturar esse cálculo integrando serviços ecossistêmicos, custos e produtividade?",
+  ctx:"SPD 20 anos vs. convencional: produtividade média SPD +15% após 5 anos; custo de preparo do solo SPD = zero vs. R$280/ha/ano no convencional; serviços ecossistêmicos do solo vivo = R$784/ha/ano calculados acima.",
+  opts:["A. O SPD tem retorno econômico apenas se combinado com certificação orgânica — sem premium de preço, os custos de implantação superam os benefícios em 20 anos","B. O cálculo correto soma: economia em preparo de solo (R$280/ha/ano × 100ha × 20 anos = R$560.000) + serviços ecossistêmicos (R$784/ha/ano × 100ha × 20 = R$1.568.000) + produtividade extra após ano 5 (15% × R$5.600/ha/ano × 100ha × 15 anos = R$1.260.000) − custo de implantação do SPD (~R$50.000 único) = R$3.338.000 de benefício em 20 anos","C. O SPD tem payback de 15 anos em condições ideais — não é recomendado para produtores com horizonte de planejamento menor que 20 anos","D. O cálculo não é possível sem dados de longo prazo de produtividade específicos para o Piauí — extrapolações de dados do Sul do Brasil não são válidas para o Cerrado","E. O benefício econômico do SPD é real mas modesto: R$50.000 em 20 anos para 100ha — justifica a adoção apenas por produtores com motivação ambiental além da financeira"],
+  correct:1,xp:50,diff:4,
+  why:"💡 O cálculo integrado revela o real ROI do SPD: (1) Economia em preparo: R$280/ha × 100ha × 20 anos = R$560.000 (combustível, mão de obra, manutenção de máquinas). (2) Serviços ecossistêmicos (biologia ativa, FBN, micorrizas, minhocas): R$784/ha/ano × 100ha × 20 = R$1.568.000. (3) Produtividade: nos primeiros 5 anos, resultado similar; a partir do ano 5, +15% × R$5.600/ha margem × 100ha × 15 anos = R$1.260.000. Total: ~R$3.388.000 de benefício − R$50.000 de implantação = ROI de 6.676% em 20 anos. Por isso o SPD hoje cobre mais de 35 milhões de ha no Brasil."},
+]},
+
+{id:7,title:"World 7: Venenos, Receitas e Responsabilidades",subtitle:"Agrotóxicos & Toxicologia",icon:"🧪",world:"MUNDO 7",color:"#4A1060",accent:"#C084FC",
+story:"ALERTA VERMELHO! Tomates interditados com resíduo 5× o LMR. 12 produtores em pânico. Câmeras de TV. E um trabalhador foi hospitalizado. Você tem uma hora para ser o mais preciso da sua vida.",
+questions:[
+  {q:"O laudo da ANVISA indica: resíduo de clorpirifós no tomate = 2,4 mg/kg. O LMR estabelecido é 0,5 mg/kg. O produtor argumenta: 'A diferença é pequena — são apenas 1,9 mg a mais por kilo.' Como refutar esse argumento com o conceito técnico do LMR?",
+  ctx:"IDA (Ingestão Diária Aceitável) do clorpirifós: 0,001 mg/kg pc/dia. Peso corporal médio: 60kg. Consumo médio de tomate pelo brasileiro: 10,7g/dia. Fator de segurança da IDA: 100× sobre o NOAEL em animais.",
+  opts:["A. O argumento do produtor é válido para adultos saudáveis — 1,9 mg/kg acima do LMR é clinicamente irrelevante; o LMR tem margem de segurança de 100× que já absorve esse desvio","B. O LMR = IDA × peso corporal / consumo do alimento = 0,001 × 60 / 0,0107 = 5,6 mg/kg; a ANVISA definiu 0,5 mg/kg (mais conservador). Com 2,4 mg/kg, a dose diária pelo tomate = 43% da IDA de um único alimento — somando outros alimentos com resíduos (efeito coquetel), a IDA diária total pode ser ultrapassada; crianças (20kg) chegam a 130% da IDA só pelo tomate","C. O LMR é definido pelo limite de detecção dos equipamentos de laboratório — qualquer valor acima do LMR é apenas erro analítico sem significado toxicológico","D. O problema não é a concentração de 2,4 mg/kg mas o fato de que clorpirifós não está autorizado para tomate no Brasil — se estivesse, qualquer nível seria aceitável","E. O desvio de 1,9 mg/kg acima do LMR é problemático apenas para pessoas com deficiência genética na enzima acetilcolinesterase — para a população geral, o clorpirifós abaixo de 5 mg/kg não tem efeito agudo"],
+  correct:1,xp:32,diff:3,
+  why:"💡 O LMR não é um 'limite de segurança com margem' — ele JÁ É calculado conservadoramente: LMR = IDA × peso corporal / consumo do alimento. A IDA já aplica fator de segurança 100× sobre o NOAEL em animais. Com 2,4 mg/kg (4,8× o LMR), a dose pelo tomate supera 43% da IDA em adultos e 130% em crianças de 20kg. Adicione exposição por outros alimentos com resíduos (efeito coquetel) e a IDA diária total fica claramente comprometida, especialmente para populações vulneráveis."},
+  {q:"O produtor aplicou clorpirifós 4 dias antes da colheita. O período de carência (PC) é 14 dias. Ele diz: 'Eu precisava colher porque o preço estava bom — 4 dias a menos não faz diferença.' Como refutar com cálculo de degradação?",
+  ctx:"Meia-vida do clorpirifós em frutos de tomate: 3-5 dias. Resíduo estimado logo após a aplicação: ~13 mg/kg (dose normal de 1,5 L/ha de produto comercial 480g/L).",
+  opts:["A. O PC de 14 dias é burocrático e definido com margem excessiva de segurança — 4 dias a menos tem impacto mínimo nos resíduos, como confirma o resultado encontrado de 2,4 mg/kg que está próximo do LMR","B. Usando cinética de primeira ordem: C(t) = C₀ × e^(-0,693t/t½). No dia 4: C = 13 × e^(-0,693×4/4) = 13 × 0,5 = 6,5 mg/kg (13× o LMR). No dia 14: C = 13 × e^(-0,693×14/4) = 13 × 0,086 = 1,1 mg/kg (ainda próximo ao LMR de 0,5 — mostrando que 14 dias é o MÍNIMO absoluto para esse produto/cultura)","C. A degradação do clorpirifós é linear: perde 0,5 mg/kg por dia. No dia 4: 13 − (4 × 0,5) = 11 mg/kg. No dia 14: 13 − (14 × 0,5) = 6 mg/kg — ainda muito acima do LMR, confirmando que o PC de 14 dias é insuficiente","D. No dia 4 o resíduo seria de 6,5 mg/kg pela lei das cinéticas de primeira ordem, mas toda a diferença entre 6,5 e 2,4 mg/kg se explica pelo fato de que a chuva no dia 3 lavou grande parte do produto — o produtor tomou uma decisão tecnicamente acertada","E. O cálculo de degradação não é aplicável porque o clorpirifós se redistribui sistemicamente pelo fruto — a concentração na polpa é sempre 10× menor que na casca, onde a análise é feita"],
+  correct:1,xp:35,diff:3,
+  why:"💡 Degradação de primeira ordem: C(t) = C₀ × e^(-kt), onde k = ln(2)/t½. Com t½ = 4 dias e C₀ = 13 mg/kg: Dia 4 = 6,5 mg/kg (13× o LMR de 0,5!). Dia 8 = 3,25 mg/kg. Dia 12 = 1,6 mg/kg. Dia 14 = 1,1 mg/kg (ainda 2× o LMR). O PC de 14 dias é o MÍNIMO para chegar próximo do LMR com essa meia-vida — e mesmo assim ainda há resíduo. O produtor que colhe no dia 4 entrega produto com 13× o LMR. 'Preço bom' não é justificativa legal ou ética."},
+  {q:"Um trabalhador rural apresenta: pupilas fortemente contraídas (miose), salivação intensa, lacrimejamento, tremores musculares, pulso lento (bradicardia) e dificuldade respiratória após manipular metamidofós (organofosforado — Classe I) sem luvas ou respirador. Qual é o diagnóstico e o protocolo de emergência correto?",
+  ctx:"DL50 oral do metamidofós (ratos): 13 mg/kg (extremamente tóxico). EPI ausente: sem luvas, sem respirador, sem macacão. Via de exposição provável: dérmica + inalatória.",
+  opts:["A. Reação alérgica anafilática ao organofosforado — administrar anti-histamínico e corticoide; a sintomatologia desaparece em 30-60 minutos sem necessidade de antídoto específico","B. Intoxicação aguda por organofosforado (síndrome colinérgica — inibição da acetilcolinesterase). Protocolo: (1) remover da exposição + retirar roupas contaminadas; (2) lavar copiosamente com água e sabão; (3) SAMU 192 imediatamente; (4) informar o nome do produto ao médico — antídoto é atropina (bloqueador muscarínico) + pralidoxima (reativa colinesterase se dado em <24h)","C. Hipoglicemia grave por esforço físico intenso com desidratação — administrar glicose por via oral e manter o trabalhador deitado à sombra","D. Crise de ansiedade com hiperventilação — manter o trabalhador calmo, oferecer respiração em saco e aguardar a resolução espontânea dos sintomas","E. Intoxicação leve por carbamato (não por organofosforado, pois carbamatos causam miose e organofosforados causam midríase) — os sintomas se revertem espontaneamente em 4-6 horas sem necessidade de atropina"],
+  correct:1,xp:38,diff:2,
+  why:"💡 Síndrome colinérgica por organofosforado: a inibição da acetilcolinesterase causa acúmulo de acetilcolina nas sinapses. Os efeitos muscarínicos (SLUDGE): Salivação, Lacrimejamento, Urinação, Defecação, vômito GI, Edema pulmonar + bradicardia + miose. Nicotínicos: fasciculações, fraqueza muscular, paralisia. SNC: convulsões, coma. ANTÍDOTO: (1) Atropina (bloqueador muscarínico) — dose até obter atropinização (boca seca, midríase leve, FC > 80); (2) Pralidoxima (PAM) — reativa a colinesterase antes da 'aging' (24h). Após a aging, a inibição é irreversível. É emergência médica com risco de óbito."},
+  {q:"Um produtor usa EPI incompleto para aplicar Mancozeb 800g/kg (fungicida): sem máscara respiratória. Ele argumenta: 'A faixa da embalagem é azul — Classe III, moderadamente tóxico. Máscara é exagero.' Como você responde tecnicamente?",
+  ctx:"DL50 oral do Mancozeb: > 5.000 mg/kg (Classe III). IARC: Grupo 2B (possível carcinogênico humano). Interfere na produção de hormônios tireoidianos (EPA, 2018). Formulado contém solventes aromáticos voláteis.",
+  opts:["A. O produtor tem razão — a classificação toxicológica Classe III confirma segurança para uso sem máscara respiratória; a ANVISA não exigiria a faixa azul se o produto representasse risco inalatório","B. A Classe III indica toxicidade aguda baixa (DL50 > 5.000 mg/kg), mas não avalia efeitos crônicos: Mancozeb é classificado como possível carcinogênico (IARC 2B), perturbador endócrino tireoidiano e seus solventes aromáticos voláteis causam dano hepático por exposição inalatória crônica. A bula especifica o EPI necessário — não a 'faixa colorida'","C. A classificação toxicológica inclui riscos inalatórios — se o produto fosse perigoso por inalação, seria Classe I ou II; a faixa azul garante que o risco inalatório é desprezível","D. O risco do Mancozeb é exclusivamente dérmico (contato com a pele) — não há vapor do produto em condições normais de temperatura; a máscara é dispensável e apenas aumenta o estresse térmico do aplicador","E. A máscara só é obrigatória quando o produto é aplicado em espaços fechados (estufas, armazéns) — em aplicação a campo aberto, a dispersão do ar ambiente elimina qualquer risco inalatório"],
+  correct:1,xp:35,diff:2,
+  why:"💡 A classificação toxicológica (DL50 oral) mede TOXICIDADE AGUDA apenas — não avalia toxicidade crônica, carcinogenicidade, disrupção endócrina nem inhalation toxicity. Mancozeb: IARC 2B (evidência limitada de carcinogenicidade humana), interfere na biossíntese de T4/T3 (hormônios tireoidianos) com exposição crônica (EPA 2018), e seus ingredientes inertes incluem solventes aromáticos voláteis que são hepatotóxicos por via inalatória. A NR-31 determina que o EPI deve ser o especificado na bula do produto — não baseado apenas na 'faixa colorida'."},
+  {q:"Como calcular o volume total de calda e a quantidade de produto para aplicação de um fungicida em 15ha? Produto: Priori Xtra — dose de bula: 300mL/ha; volume de calda: 150 L/ha. O pulverizador tem tanque de 800L.",
+  ctx:"A calibração do pulverizador mostrou que os bicos estão aplicando 160 L/ha (6,7% acima do recomendado). O técnico precisa decidir se recalibra os bicos ou ajusta a dose do produto.",
+  opts:["A. Volume de calda: 15 × 150 = 2.250L (2,8 tanques). Produto: 15 × 300 = 4.500mL (4,5L). Com bicos aplicando 160 L/ha, a dose do produto por hectare seria 300/150 × 160 = 320mL/ha — 6,7% acima do recomendado, que está dentro da tolerância analítica e não requer recalibração","B. Volume de calda: 15 × 160 = 2.400L (3,0 tanques). Produto: 15 × 300 = 4.500mL. Com bicos a 160 L/ha, para manter a dose correta de 300mL/ha, a concentração no tanque deve ser recalculada: 300mL/160L × 800L = 1.500mL por tanque (em vez de 1.600mL); recalibrar os bicos é melhor para garantir uniformidade","C. Volume de calda: 15 × 150 = 2.250L. Produto total: 4.500mL. Com bicos a 160 L/ha, deve-se dobrar a dose do produto para compensar a diluição extra causada pelo volume maior","D. O volume de calda correto é 15ha × 300mL = 4.500L; a dose por hectare e o volume por hectare são calculados da mesma forma porque ambos são expressos em mL/ha","E. Com bicos descalibrados, a única solução válida é não realizar a aplicação até que novos bicos sejam instalados — qualquer ajuste na dose sem recalibração formal invalida a ART do técnico"],
+  correct:1,xp:32,diff:3,
+  why:"💡 Volume total correto: 15ha × 150 L/ha = 2.250L (2,8 tanques de 800L). Produto total: 15ha × 300mL/ha = 4.500mL (4,5L). Com bicos aplicando 160 L/ha (6,7% a mais): a concentração do produto na calda permanece a mesma (300mL por 150L = 2 mL/L). Com 160 L/ha, a dose aplicada seria 320mL/ha — 6,7% acima. A resposta B está correta: recalibrar é melhor, mas se não for possível, ajustar a concentração por tanque. Bico descalibrado em ±20% pode causar fitotoxicidade ou controle insuficiente — ambos com consequências econômicas e de resistência."},
+  {q:"O que são os disruptores endócrinos e como a exposição crônica a agrotóxicos com esse mecanismo difere da toxicidade aguda avaliada pelo DL50?",
+  ctx:"Exemplos de disruptores endócrinos em agrotóxicos: atrazina (altera hormônios sexuais em anfíbios a 0,1 ppb), DDT (ainda detectado no leite materno humano décadas após uso), clorpirifós (redução de QI em crianças em exposição pré-natal abaixo do LMR).",
+  opts:["A. Disruptores endócrinos são substâncias que causam toxicidade aguda ao sistema endócrino — são detectados pela DL50 e pelos LMRs tradicionais, que já incluem essa categoria de risco","B. Disruptores endócrinos atuam em doses 100-10.000× abaixo da DL50, interferindo em receptores hormonais (estrogênio, andrógeno, tireoide) e causando efeitos de desenvolvimento, reprodução e neurológicos com latência de anos a décadas — invisíveis ao sistema de avaliação pelo DL50 que só mede efeitos agudos em 14 dias","C. Disruptores endócrinos são um conceito científico controverso sem consenso internacional — a maioria das agências reguladoras, incluindo a ANVISA, não utiliza esse critério na avaliação de agrotóxicos","D. A toxicidade endócrina crônica é sempre 1.000× menor que a toxicidade aguda — por isso os LMRs, que já aplicam fator de segurança de 100×, protegem adequadamente contra ambos os tipos de toxicidade","E. Disruptores endócrinos só causam efeitos adversos em organismos aquáticos como anfíbios e peixes — em mamíferos, o sistema endócrino tem redundância que elimina o risco de disrupção por compostos exógenos"],
+  correct:1,xp:40,diff:4,
+  why:"💡 A toxicologia clássica baseia-se no princípio de Paracelso: 'a dose faz o veneno'. Disruptores endócrinos desafiam esse paradigma: (1) Podem ter efeito não-monotônico (dose-resposta em U ou invertida — efeito máximo em dose baixa); (2) Atuam em janelas críticas do desenvolvimento (fetal, neonatal, puberdade) quando o sistema endócrino é mais vulnerável; (3) Latência longa entre exposição e manifestação do efeito (ex: DES — dietilestilbestrol: exposição in utero, câncer vaginal na filha 20 anos depois). O DL50 em ratos adultos por 14 dias não captura esses efeitos."},
+  {q:"BOSS FASE 7: Como elaborar um Receituário Agronômico completo e válido para um fungicida em tomate? Quais elementos são obrigatórios e qual é a responsabilidade legal do técnico emissor?",
+  ctx:"Lei 7.802/1989 (Lei dos Agrotóxicos) e Decreto 4.074/2002. CREA: ART obrigatória. O técnico tem responsabilidade civil, administrativa e eventualmente criminal.",
+  opts:["A. O Receituário Agronômico precisa apenas do nome do produto, dose e assinatura do técnico — os demais campos são opcionais e variam por estado","B. Elementos obrigatórios (Art. 65, Decreto 4.074/2002): identificação do emitente com número do CREA + número da ART, identificação do produtor e da área, cultura, praga/doença alvo identificada em campo, produto (nome comercial + ingrediente ativo + dose), número de aplicações, intervalos, período de carência, EPI necessário conforme a bula, orientações de descarte de embalagem e data. Responsabilidade: civil (reparação de danos), administrativa (cassação do registro) e eventualmente criminal (Lei 9.605/98)","C. O Receituário Agronômico é apenas um documento comercial que autoriza a compra do produto — a responsabilidade pelo uso correto é exclusivamente do produtor rural","D. A ART só é necessária em receituários para produtos Classe I e II — produtos Classe III e IV podem ser receitados sem ART, pois o risco é considerado baixo pela legislação","E. O técnico pode emitir receituário mesmo sem visita ao campo — a análise de solo digital e o histórico de produção do sistema de gestão agrícola substituem a visita presencial para fins de responsabilidade técnica"],
+  correct:1,xp:48,diff:4,
+  why:"💡 O Receituário Agronômico é o documento mais importante da responsabilidade profissional do técnico agrícola. A ART (Anotação de Responsabilidade Técnica) registrada no CREA vincula juridicamente o profissional ao ato técnico. Se o produto causar: excesso de resíduo (responsabilidade civil + criminal), intoxicação do trabalhador (responsabilidade civil + trabalhista), dano ambiental (Lei 9.605/98), o técnico emissor é corresponsabilizado solidariamente. Nunca emita sem: visita presencial à área, diagnóstico fitossanitário presencial, preenchimento de todos os campos obrigatórios."},
+]},
+
+{id:8,title:"World 8 FINAL: Fazenda Esperança",subtitle:"Gestão Integrada da Propriedade",icon:"🏆",world:"MUNDO 8 — BOSS FINAL",color:"#0A3A0A",accent:"#4ADE80",
+story:"FASE FINAL — O BOSS DE TODOS OS BOSSES! Você foi chamado para elaborar o Plano de Manejo Integrado da Fazenda Esperança: 500ha, bacia hidrográfica degradada, solo exausto, produtor endividado. Este é o maior desafio da sua carreira. TUDO que você aprendeu será usado agora!",
+questions:[
+  {q:"Antes de qualquer intervenção na Fazenda Esperança (500ha), qual é a sequência técnica obrigatória do diagnóstico integrado e por que ela é inegociável?",
+  ctx:"Propriedade com 20 anos de soja convencional, solo degradado, bacia hidrográfica comprometida. Produtor endividado em R$800.000 quer 'começar a aplicar calcário logo'.",
+  opts:["A. Começar imediatamente pelo calcário — o pH baixo é o problema mais urgente e qualquer diagnóstico adicional apenas atrasa a recuperação","B. Análise de solo em grade (1 amostra/ha) → levantamento topográfico → análise de qualidade da água → mapeamento de APP/RL via CAR/SIGEF → entrevistas sobre histórico → só então prescrever. Sem diagnóstico, a calagem pode ser aplicada onde o pH já está adequado e ignorada onde é mais urgente — desperdício de R$500.000+","C. Contratar imediatamente subsolagem em toda a área — a compactação é o problema universal de fazendas degradadas e pode ser corrigida antes do diagnóstico químico","D. Fazer apenas uma análise de solo composta (todas as amostras misturadas) para ter um valor médio de pH — mais rápido e economicamente viável para uma propriedade endividada","E. O diagnóstico não é tecnicamente necessário em propriedades com histórico de soja — os parâmetros de solo são previsíveis e a recomendação padrão de 3 t/ha de calcário + 80kg P₂O₅ + 80kg K₂O pode ser aplicada sem análise"],
+  correct:1,xp:40,diff:3,
+  why:"💡 O diagnóstico integrado é o equivalente ao exame médico completo — prescrever sem diagnosticar é imprudência profissional. Em uma propriedade de 500ha, a variabilidade de solo pode ser enorme: pH de 5,0 a 6,8 na mesma gleba (dado real de fazendas do Cerrado). Aplicar 4 t/ha de calcário onde o pH já é 6,5 gasta R$200.000 sem retorno e pode causar supercalcificação com deficiência de micronutrientes. A grade amostral custa R$40.000-60.000 e se paga na primeira safra com adubação racional."},
+  {q:"O plano inclui o terraçamento de 300ha com declividade média de 10%. Usando o método de Bertoni para solo argiloso (fator F = 0,5), qual é o espaçamento vertical (EV) e o espaçamento horizontal (EH) corretos?",
+  ctx:"Fórmula de Bertoni: EV(m) = 2 + F × D, onde D = declividade em %. EH(m) = EV / (D/100). Solo: Latossolo argiloso, 55% de argila.",
+  opts:["A. EV = 2 + 0,5 × 10 = 7,0m. EH = 7,0 / (10/100) = 70m entre terraços","B. EV = 2 + 10 × 0,5 = 7,0m. EH = EV × 100/D = 7,0 × 100/10 = 70m — mesmo resultado por fórmula alternativa equivalente","C. EV = 10 × 0,5 = 5,0m. EH = 5,0 / 0,10 = 50m — o valor fixo '2' da fórmula de Bertoni só se aplica a solos arenosos","D. EV = 2 × 0,5 × 10 = 10m. EH = 10 / 0,10 = 100m — para solos argilosos, aplica-se um fator multiplicativo, não aditivo","E. EV = 2 + 0,5/10 = 2,05m. EH = 2,05 / 0,10 = 20,5m — o fator F deve ser dividido pela declividade para solos com alto teor de argila"],
+  correct:0,xp:42,diff:4,
+  why:"💡 Método de Bertoni (Embrapa IAC): EV(m) = 2 + F × D = 2 + 0,5 × 10 = 7,0m. EH = EV / (D/100) = 7,0 / 0,10 = 70m. Para gleba de 300m de comprimento de rampa: 300/70 ≈ 4-5 terraços. Para solo arenoso (F = 1/3): EV = 2 + 3,33 = 5,33m, EH = 53m — espaçamento menor porque solo arenoso é mais erodível. Cada terraço precisa de sangradouro em gradiente (0,2-0,5%) para conduzir o excesso de água à saída controlada — terraço sem sangradouro funcional rompe na primeira chuva intensa."},
+  {q:"A Fazenda Esperança tem 80ha de APP ao longo de cursos d'água e ao redor de nascentes. O produtor quer saber: além da obrigação legal de recuperar essas APPs, como monetizar essa área através de PSA e mercado de carbono?",
+  ctx:"APP com vegetação nativa preservada pode gerar PSA hídrico. APP recuperada pode gerar créditos REDD+ no mercado voluntário. PRONAF Floresta: até R$35.000 a 1,5% a.a. para recuperação de APP.",
+  opts:["A. APP não pode gerar receita de nenhuma forma — sua função é exclusivamente de proteção ambiental e qualquer monetização é proibida pela legislação ambiental brasileira","B. APP não pode ser usada para créditos de carbono porque a vegetação nativa é obrigatória por lei — serviços ambientais só podem ser monetizados em áreas de uso voluntário (Reserva Legal excedente, RPPN)","C. PSA hídrico: APPs preservadas evitam R$350.000/ano em custos de tratamento de água (cálculo anterior). REDD+ (mercado voluntário): APPs em recuperação sequestram 2-5 t CO₂/ha/ano — 80ha × 3,5 t × R$80/t = R$22.400/ano. PRONAF Floresta financia a recuperação a 1,5% a.a. Dupla monetização: PSA (serviço hídrico) + carbono (serviço climático)","D. A única forma legal de monetizar APP é através do arrendamento para pastejo extensivo de baixa intensidade — a produção pecuária em APP é permitida desde que a cobertura arbórea seja mantida acima de 30%","E. APPs geram créditos de carbono apenas quando o desmatamento é evitado (REDD+) — uma APP já desmatada e em recuperação não tem elegibilidade para mercado de carbono porque não há 'desmatamento a evitar'"],
+  correct:2,xp:45,diff:4,
+  why:"💡 A monetização de APPs é possível e legalmente embasada: (1) PSA hídrico (Lei 14.119/2021): a APP preservada reduz turbidez e regulariza vazão — o usuário de água a jusante (prefeitura, irrigantes) pode remunerar o provedor do serviço. (2) REDD+ para APPs em recuperação: o sequestro de carbono durante a regeneração é elegível no mercado voluntário (metodologia VCS + CCBS). (3) PRONAF Floresta: financia a recuperação. Uma APP de 80ha pode gerar R$22.400/ano em carbono + R$12.000/ano em PSA = R$34.400/ano de nova receita, transformando uma obrigação legal em ativo econômico."},
+  {q:"Como integrar o Balanço Hídrico Climatológico no planejamento de cultivos para os 500ha da Fazenda Esperança no Piauí?",
+  ctx:"Dados do BHC (Thornthwaite-Mather) para o município: precipitação total anual = 1.050mm; ETP anual = 1.280mm; deficit hídrico acumulado de maio a outubro = 480mm; CAD do solo = 55mm.",
+  opts:["A. O BHC indica que o Piauí tem chuva suficiente para qualquer cultura de sequeiro — o deficit de 480mm ocorre apenas em anos de seca acima da média e não deve orientar o planejamento de cultivos em anos normais","B. Deficit de 480mm em 5-6 meses com CAD de apenas 55mm indica que qualquer cultura com ciclo >90 dias é inviável como sequeiro nesse período. Cultivos viáveis sem irrigação: feijão-caupi (ciclo 60-75 dias), gergelim (90 dias), palma forrageira. Para soja e milho: apenas na janela de chuvas (novembro-abril), respeitando o ZARC","C. O deficit de 480mm indica que a fazenda precisa de um sistema de irrigação que aplique exatamente 480mm em 6 meses — um pivô central dimensionado para essa lâmina resolve completamente o problema hídrico de qualquer cultura","D. O BHC é calculado para a estação meteorológica do município e não representa a variabilidade dentro da fazenda — micro-relevos e tipos de solo criam microclimas com deficit hídrico variando de 200 a 700mm e tornam o BHC municipal inutilizável para planejamento de cultivos","E. O deficit de 480mm na estação seca é favorável para a produção de culturas como soja e trigo, que preferem períodos de seca durante a maturação — o BHC confirma que o Piauí é mais apto para essas culturas que o Sul do Brasil"],
+  correct:1,xp:45,diff:3,
+  why:"💡 O BHC é a ferramenta fundamental de planejamento agrícola em regiões com déficit sazonal. CAD = 55mm: o solo 'esgota' a reserva hídrica em menos de 8-10 dias sem chuva (55mm / 6-7mm de ETP/dia). Com deficit de 480mm em 5-6 meses, culturas de ciclo médio-longo (soja, milho) precisam estar completamente desenvolvidas e colhidas ANTES do início da seca. O ZARC define exatamente essa janela segura para cada município/cultura. Feijão-caupi foi domesticado há 4.000 anos no Nordeste precisamente por sua tolerância excepcional à seca."},
+  {q:"Para o relatório técnico final da Fazenda Esperança, você precisa calcular o impacto potencial da adoção do Plano de Manejo em 10 anos, na escala do município (120.000ha de lavoura, 800 produtores). Qual é o impacto estimado em carbono e qualidade hídrica?",
+  ctx:"Parâmetros: SPD em 100% das lavouras = sequestro de 0,8 t C/ha/ano. Recuperação de 15.000ha de APP = redução de 480.000 t de sedimentos/ano no ribeirão principal. 1 t C = 3,67 t CO₂.",
+  opts:["A. Impacto insignificante — ações em escala municipal não têm efeito mensurável nas métricas regionais de qualidade hídrica ou carbono","B. Carbono: 120.000ha × 0,8 t C/ha/ano = 96.000 t C/ano = 352.320 t CO₂eq/ano sequestradas. No mercado voluntário (R$60/t): R$21,1 milhões/ano potencial. Qualidade hídrica: recuperação de 15.000ha de APP = -480.000 t sedimentos/ano no ribeirão = redução de 60-70% na turbidez + aumento de 20-35% na vazão mínima em 8-10 anos (base: Programa Produtor de Água, ANA)","C. Carbono: 120.000ha × 0,8 = 96.000 t CO₂/ano (sem conversão C→CO₂). Hídrico: redução de 50% nos eventos de enchente, sem impacto na turbidez pois o assoreamento já ocorrido é irreversível em escala de décadas","D. O impacto do SPD em carbono é de 0,08 t C/ha/ano (não 0,8) — há um erro de ordem de magnitude nos dados apresentados; o valor correto resulta em 9.600 t CO₂/ano, muito abaixo do potencial de mercado","E. O SPD sequestra carbono apenas nos primeiros 5 anos até atingir o equilíbrio — após isso, o solo para de acumular C e o impacto em carbono volta a zero independente da continuidade da prática"],
+  correct:1,xp:50,diff:4,
+  why:"💡 A escala importa: 120.000ha × 0,8 t C/ha/ano = 96.000 t C/ano × 3,67 = 352.320 t CO₂eq/ano. Ao preço médio do mercado voluntário de carbono (R$60/t): R$21,1 milhões/ano de potencial de crédito para o município — nova fonte de renda para 800 produtores. Casos reais documentados: (1) Noroeste do PR: de 'deserto vermelho' nos anos 1970 para maior produtor de soja/trigo do Brasil após SPD massivo. (2) Bacia do Rio São Marcos: 15 anos de SPD + terraços = -65% na turbidez (Embrapa Cerrados, 2018). A transformação regional começa com cada técnico e cada propriedade."},
+  {q:"Qual é a estrutura completa de um Plano de Gestão Ambiental Rural que satisfaz simultaneamente as exigências do banco financiador (ABC+), do órgão ambiental (CAR/PRA) e do mercado comprador (certificação de origem)?",
+  ctx:"Fazenda Esperança precisa de: crédito ABC+ (R$300.000) + regularização ambiental (35ha de deficit de RL) + acesso ao mercado europeu (exige rastreabilidade e conformidade ambiental).",
+  opts:["A. Para o banco basta CAR ativo + análise de solo. Para o órgão ambiental basta PRA protocolado. Para o mercado basta declaração de conformidade assinada pelo produtor — os três documentos são independentes e não precisam ser integrados","B. Um único Plano integrado cobre as três exigências: Diagnóstico georreferenciado (satisfaz banco e órgão ambiental) + Linha de base de GEE e metas ABC+ (banco) + Cronograma de recuperação de 35ha de RL no PRA (órgão ambiental) + Sistema de rastreabilidade (caderno de campo + receituários + ART) registrado em plataforma blockchain-compatible (mercado). A integração reduz custos e elimina contradições entre documentos","C. As exigências do banco (produtividade e garantias) e do órgão ambiental (conservação) são estruturalmente conflitantes — é tecnicamente impossível elaborar um plano único que satisfaça ambos simultaneamente","D. O mercado europeu exige certificação GlobalGAP que, uma vez obtida, automaticamente satisfaz as exigências do banco ABC+ e dispensa a elaboração de PRA junto ao órgão ambiental estadual","E. O Plano de Gestão Ambiental Rural é competência exclusiva do advogado ambiental e do contador rural — o técnico agrícola não tem habilitação legal para elaborar esse documento"],
+  correct:1,xp:48,diff:4,
+  why:"💡 A convergência regulatória é uma tendência crescente: banco + órgão ambiental + mercado exigem cada vez mais os mesmos dados de base (georreferenciamento, análises, histórico de manejo). Um plano integrado bem estruturado satisfaz as três demandas com um único conjunto de informações. O elemento chave é o sistema de rastreabilidade: caderno de campo digital + receituários com ART + análises de solo e resíduo → exportável para qualquer plataforma de certificação. Custo de um plano integrado: R$8.000-15.000 (vs. R$5.000-8.000 por cada um separado = R$15.000-24.000 por via fragmentada)."},
+  {q:"Você precisa apresentar ao produtor um resumo executivo do Plano de Manejo Integrado com 5 pilares, metas mensuráveis em 5 anos e retorno financeiro projetado. Qual estrutura demonstra o melhor ROI?",
+  ctx:"Situação atual da Fazenda Esperança: COS 0,9%, infiltração 8mm/h, sem terraços, sem mata ciliar, 1 açude, endividamento R$800.000, produtividade soja 42 sc/ha.",
+  opts:["A. 5 pilares: solo (SPD), água (gotejamento), produção (soja), crédito (renegociar dívida), mercado (aumentar área). ROI em 5 anos: depende do preço da soja — impossível projetar com confiabilidade","B. 5 pilares com metas: (1) Solo (SPD→COS 1,5% em 3 anos, +15% produtividade); (2) Água (barraginhas+APP→3 fontes seguras, recarga do lençol); (3) Produção (rotação soja-milho-braquiária→-50% custos invisíveis); (4) Carbono/PSA (iLPF em 100ha + APP recuperada→R$55.000/ano novas receitas); (5) Regularização (CAR+PRA→acesso a ABC+ R$300.000 a 3,5% a.a.). Projeção 5 anos: produtividade 42→58 sc/ha, margem R$1.380→R$3.800/ha, dívida quitada no 4° ano","C. O melhor ROI vem de aumentar a área plantada com soja de 300 para 500ha usando todos os recursos do ABC+; nenhuma mudança de sistema produtivo é necessária — apenas mais área com o mesmo modelo","D. 5 pilares: fertilidade (calagem+gessagem), pragas (MIP), água (irrigação), mercado (cooperativa) e crédito (renegociação). ROI negativo nos primeiros 3 anos é esperado e aceitável — o produtor deve ser orientado a vender ativos para suprir o período de transição","E. O produtor endividado não deve implementar plano de manejo integrado agora — deve primeiro quitar a dívida e só então investir em melhorias; o plano ideal é sequencial, não simultâneo"],
+  correct:1,xp:55,diff:4,
+  why:"💡 O plano integrado com 5 pilares é simultâneo, não sequencial — cada pilar se retroalimenta. Pilar 1 (SPD): zero custo após implantação, +15% produtividade após 3 anos = +R$2.016/ha × 300ha = R$604.800 extras em 5 anos. Pilar 4 (Carbono/PSA): R$55.000/ano × 5 = R$275.000 de novas receitas sem alterar a produção. Pilar 5 (ABC+ R$300.000 a 3,5%): financia os outros pilares com custo financeiro menor que a inflação. Em 5 anos: dívida de R$800.000 quitada pelo aumento de margem e novas receitas. Esta é a narrativa que converte um produtor cético em parceiro do técnico."},
+  {q:"QUESTÃO FINAL — NÍVEL MÁXIMO: Como o técnico agrícola do século 21 deve integrar sua responsabilidade técnica, ética, legal e ambiental numa única prática profissional coerente?",
+  ctx:"1 técnico impacta em média 80-150 produtores ao longo da carreira. 70% dos municípios brasileiros dependem economicamente da agropecuária. O técnico é o elo entre a ciência e o campo.",
+  opts:["A. A responsabilidade principal do técnico é maximizar a produtividade do produtor — questões ambientais e sociais são competência de outros profissionais (engenheiros ambientais, assistentes sociais)","B. O técnico deve priorizar sempre a conformidade legal sobre a viabilidade econômica do produtor — se o produtor não pode pagar pelas práticas corretas, o técnico deve recusar a prestação de serviços","C. O técnico é facilitador sistêmico: integra ciência do solo/água/nutrição/pragas (base técnica) + instrumentos legais/crédito (habilidade jurídico-financeira) + escuta ativa do produtor e da comunidade (competência social) + adaptação às mudanças climáticas (resiliência). ART + ética profissional + documentação adequada protegem o técnico e o produtor simultaneamente","D. Na prática, a ética e a legalidade são restrições que limitam a eficiência técnica — o bom técnico aprende a trabalhar nos limites do sistema sem ser impedido por burocracia ambiental","E. O técnico deve sempre deferência total ao produtor — se o produtor decide fazer algo tecnicamente incorreto após receber a orientação, a responsabilidade passa 100% para o produtor e o técnico fica isento de qualquer consequência"],
+  correct:2,xp:100,diff:5,
+  why:"💡 CERTIFICADO DE EXCELÊNCIA DESBLOQUEADO! O técnico do século 21 sabe que: (1) Solo recuperado → mais água retida → menos erosão → rio mais limpo → família rural com renda estável → carbono sequestrado → clima mais estável. Tudo está conectado. (2) A ART protege o técnico quando ele age corretamente — e o responsabiliza quando não age. (3) O produtor que resiste a mudanças precisa de dados, não de imposição. (4) A ciência agrícola e a sustentabilidade ambiental convergem para o mesmo destino: uma agricultura mais produtiva, mais resiliente e mais justa. Boa sorte, Técnico Agrícola! 🌾"},
+]},
+];
+
+const PF={fontFamily:"'Courier New',monospace"};
+const BG="#0a0a12",CARD="#13131f",BORDER="#2a2a45";
+const GOLD="#FFD700",GREEN="#22c55e",RED="#ef4444",BLUE="#60a5fa";
+const PURPLE="#a78bfa",TEAL="#2dd4bf",ORANGE="#f97316",GRAY="#6b7280";
+
+const STYLE=`
+@keyframes walk{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+@keyframes floatpet{0%,100%{transform:translateY(0) rotate(-5deg)}50%{transform:translateY(-8px) rotate(5deg)}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+@keyframes pop{0%{transform:scale(1)}50%{transform:scale(1.35)}100%{transform:scale(1)}}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-7px)}75%{transform:translateX(7px)}}
+`;
+
+function Bar({v,max,color,h=10}){
+  return(
+    <div style={{height:h,background:"#1a1a2e",border:`1px solid ${BORDER}`,overflow:"hidden"}}>
+      <div style={{width:`${Math.max(0,Math.min(100,(v/max)*100))}%`,height:"100%",background:color,transition:"width 0.5s"}}/>
+    </div>
+  );
+}
+
+function App(){
+  const[screen,setScreen]=useState("intro");
+  const[name,setName]=useState("");
+  const[petIdx,setPetIdx]=useState(0);
+  const[phase,setPhase]=useState(0);
+  const[qIdx,setQIdx]=useState(0);
+  const[hp,setHp]=useState(100);
+  const[xp,setXp]=useState(0);
+  const[level,setLevel]=useState(1);
+  const[score,setScore]=useState(0);
+  const[streak,setStreak]=useState(0);
+  const[answered,setAnswered]=useState(null);
+  const[correct,setCorrect]=useState(null);
+  const[showWhy,setShowWhy]=useState(false);
+  const[log,setLog]=useState([]);
+  const[totalRight,setTotalRight]=useState(0);
+  const[walkPos,setWalkPos]=useState(0);
+
+  const pet=PETS[petIdx];
+  const ph=PHASES[phase];
+  const q=ph&&ph.questions[qIdx];
+  const totalQ=ph?ph.questions.length:1;
+  const xpNext=level*150;
+
+  useEffect(()=>{
+    if(screen==="game")setWalkPos(Math.round((qIdx/totalQ)*88));
+  },[qIdx,screen,totalQ]);
+
+  const addLog=m=>setLog(l=>[m,...l].slice(0,5));
+
+  const handleAnswer=idx=>{
+    if(answered!==null)return;
+    setAnswered(idx);
+    const ok=idx===q.correct;
+    setCorrect(ok);
+    setShowWhy(false);
+    if(ok){
+      const mult=streak>=3?2:streak>=2?1.5:1;
+      const gained=Math.round(q.xp*mult);
+      const newXp=xp+gained;
+      const newLevel=Math.floor(newXp/(newLevel*150||150))+1;
+      setXp(newXp%(level*150));
+      setLevel(l=>Math.max(l,newLevel));
+      setScore(s=>s+gained);
+      setStreak(s=>s+1);
+      setTotalRight(t=>t+1);
+      if(pet.stat==="hp")setHp(h=>Math.min(100,h+8));
+      addLog(`✅ +${gained}XP${mult>1?` 🔥x${mult}`:""}`);
+    }else{
+      const dmg=pet.stat==="def"?10:22;
+      const newHp=Math.max(0,hp-dmg);
+      setHp(newHp);
+      setStreak(0);
+      addLog(`❌ -${dmg} HP | Combo zerado`);
+      if(newHp<=0){setTimeout(()=>setScreen("over"),1400);return;}
+    }
+  };
+
+  const nextQ=()=>{
+    if(qIdx+1>=totalQ){setScreen("phaseclear");return;}
+    setQIdx(i=>i+1);
+    setAnswered(null);setCorrect(null);setShowWhy(false);
+  };
+
+  const nextPhase=()=>{
+    if(phase+1>=PHASES.length){setScreen("victory");return;}
+    setPhase(p=>p+1);setQIdx(0);
+    setAnswered(null);setCorrect(null);setShowWhy(false);setScreen("game");
+    addLog(`🌾 Fase ${phase+2} iniciada!`);
+  };
+
+  const restart=()=>{
+    setScreen("intro");setPhase(0);setQIdx(0);setHp(100);
+    setXp(0);setLevel(1);setScore(0);setStreak(0);
+    setAnswered(null);setCorrect(null);setShowWhy(false);
+    setLog([]);setTotalRight(0);
+  };
+
+  if(screen==="intro")return(
+    <div style={{...PF,background:BG,minHeight:"100vh",color:"#ddd",padding:16}}>
+      <style>{STYLE}</style>
+      <div style={{maxWidth:520,margin:"0 auto"}}>
+        <div style={{background:CARD,border:`2px solid ${GOLD}`,borderRadius:4,padding:20,marginBottom:14,textAlign:"center"}}>
+          <div style={{fontSize:36,animation:"pop 2s infinite",display:"inline-block"}}>🌾</div>
+          <div style={{fontSize:18,color:GOLD,letterSpacing:3,marginBottom:2}}>AGROTECH RPG</div>
+          <div style={{fontSize:9,color:TEAL,letterSpacing:2}}>◀ TÉCNICO AGRÍCOLA — PIXEL EDITION ▶</div>
+          <div style={{fontSize:9,color:GRAY,marginTop:4}}>8 MUNDOS • 64 QUESTÕES • ESTILO 80s</div>
+          <div style={{display:"flex",justifyContent:"center",gap:8,marginTop:8,fontSize:12}}>
+            {["🍄","⭐","🌀","💎","🔥"].map((e,i)=><span key={i} style={{animation:`blink ${1+i*0.3}s infinite`}}>{e}</span>)}
+          </div>
+        </div>
+        <div style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:4,padding:14,marginBottom:12}}>
+          <div style={{fontSize:10,color:TEAL,marginBottom:8}}>▶ INSIRA SEU NOME, TÉCNICO:</div>
+          <input value={name} onChange={e=>setName(e.target.value)} maxLength={18} placeholder="Player 1..."
+            style={{background:"#0d0d1a",border:`1px solid ${BLUE}`,color:GOLD,padding:"8px 10px",fontSize:13,width:"100%",boxSizing:"border-box",borderRadius:2,fontFamily:"'Courier New',monospace",outline:"none"}}/>
+        </div>
+        <div style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:4,padding:14,marginBottom:12}}>
+          <div style={{fontSize:10,color:TEAL,marginBottom:10}}>▶ ESCOLHA SEU PET COMPANION:</div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+            {PETS.map((p,i)=>(
+              <button key={i} onClick={()=>setPetIdx(i)}
+                style={{...PF,background:petIdx===i?"#0d1a2e":"#111",border:`1px solid ${petIdx===i?p.color:BORDER}`,
+                  color:petIdx===i?p.color:GRAY,padding:"10px 8px",cursor:"pointer",textAlign:"left",borderRadius:2,fontSize:10}}>
+                <div style={{fontSize:22,display:"block",animation:petIdx===i?"floatpet 1.5s infinite":"none"}}>{p.emoji}</div>
+                <div style={{color:petIdx===i?GOLD:"#aaa",fontWeight:"bold",marginTop:4}}>{p.label}</div>
+                <div style={{color:TEAL,fontSize:9,marginTop:2}}>{p.bonus}</div>
+              </button>
+            ))}
+          </div>
+        </div>
+        <div style={{background:"#0a0a1a",border:`1px solid ${BORDER}`,borderRadius:4,padding:12,marginBottom:14,fontSize:9,color:GRAY,lineHeight:1.9}}>
+          <span style={{color:GOLD}}>HOW TO PLAY:</span> Você é Técnico Agrícola. Cada fase = problema real de campo. 5 opções por questão — leia com atenção! Acertos seguidos = <span style={{color:ORANGE}}>COMBO 🔥</span>. Erros custam HP. Clique "Ver Explicação Técnica" para aprender com dados reais. Complete os 8 Mundos para receber seu Certificado!
+        </div>
+        <button onClick={()=>{if(name.trim())setScreen("game");}} disabled={!name.trim()}
+          style={{...PF,width:"100%",padding:"14px",fontSize:13,letterSpacing:2,cursor:name.trim()?"pointer":"not-allowed",
+            background:name.trim()?"#052a05":"#111",color:name.trim()?GREEN:GRAY,
+            border:`2px solid ${name.trim()?GREEN:BORDER}`,borderRadius:2}}>
+          {name.trim()?`▶ START — ${name.toUpperCase()}`:"INSIRA SEU NOME PARA CONTINUAR"}
+        </button>
+      </div>
+    </div>
+  );
+
+  if(screen==="over")return(
+    <div style={{...PF,background:"#0d0002",minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",color:RED,padding:20,textAlign:"center"}}>
+      <style>{STYLE}</style>
+      <div style={{fontSize:52,animation:"shake 0.6s infinite"}}>💀</div>
+      <div style={{fontSize:18,color:"#ff3333",margin:"14px 0"}}>GAME OVER</div>
+      <div style={{color:GRAY,fontSize:11,maxWidth:360,lineHeight:1.9,marginBottom:14}}>
+        Suas decisões causaram danos sérios ao ecossistema, {name}. Revise os conceitos e tente novamente!
+      </div>
+      <div style={{background:"#1a0004",border:"1px solid #5a0010",padding:12,borderRadius:4,marginBottom:14,fontSize:10,color:GRAY}}>
+        Fase {phase+1}/8 • Score: {score} • Lv.{level} • Acertos: {totalRight}
+      </div>
+      <button onClick={restart} style={{...PF,background:"#1a0004",color:RED,border:`2px solid ${RED}`,padding:"10px 28px",cursor:"pointer",fontSize:13,borderRadius:2}}>▶ TENTAR NOVAMENTE</button>
+    </div>
+  );
+
+  if(screen==="phaseclear")return(
+    <div style={{...PF,background:BG,minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",color:GREEN,padding:20,textAlign:"center"}}>
+      <style>{STYLE}</style>
+      <div style={{fontSize:52,animation:"pop 0.8s infinite"}}>⭐</div>
+      <div style={{fontSize:16,color:GOLD,margin:"12px 0"}}>{ph.world} — COMPLETO!</div>
+      <div style={{fontSize:12,color:TEAL,marginBottom:12}}>{ph.title}</div>
+      <div style={{background:CARD,border:`1px solid ${GREEN}`,padding:16,borderRadius:4,marginBottom:16,fontSize:10,color:GRAY,minWidth:260}}>
+        <div>XP: <span style={{color:GOLD}}>{xp}</span> • Nível: <span style={{color:BLUE}}>Lv.{level}</span></div>
+        <div>HP: <span style={{color:GREEN}}>{hp}/100</span> • Score: <span style={{color:ORANGE}}>{score}</span></div>
+        {phase+1<PHASES.length&&<div style={{marginTop:8,color:TEAL}}>Próximo: {PHASES[phase+1].title}</div>}
+      </div>
+      <button onClick={nextPhase} style={{...PF,background:"#052a05",color:GREEN,border:`2px solid ${GREEN}`,padding:"12px 28px",cursor:"pointer",fontSize:12,borderRadius:2}}>
+        {phase+1>=PHASES.length?"🏆 VER RESULTADO FINAL":`▶ ${PHASES[phase+1]&&PHASES[phase+1].world}: ${PHASES[phase+1]&&PHASES[phase+1].title}`}
+      </button>
+    </div>
+  );
+
+  if(screen==="victory")return(
+    <div style={{...PF,background:"#020d02",minHeight:"100vh",color:GREEN,padding:20,textAlign:"center"}}>
+      <style>{STYLE}</style>
+      <div style={{maxWidth:560,margin:"0 auto"}}>
+        <div style={{fontSize:60,animation:"pop 1s infinite",display:"inline-block"}}>🏆</div>
+        <div style={{fontSize:20,color:GOLD,margin:"12px 0",letterSpacing:3}}>PARABÉNS!</div>
+        <div style={{background:"#040d04",border:`2px solid ${GOLD}`,borderRadius:8,padding:24,marginBottom:20}}>
+          <div style={{fontSize:36,marginBottom:8}}>📜</div>
+          <div style={{fontSize:14,color:GOLD,marginBottom:6}}>CERTIFICADO DE EXCELÊNCIA</div>
+          <div style={{color:GREEN,fontSize:12}}>Certifica-se que</div>
+          <div style={{fontSize:18,color:"#fff",margin:"6px 0"}}>{name.toUpperCase()}</div>
+          <div style={{color:GREEN,fontSize:10,lineHeight:2}}>
+            completou os 8 Mundos do AgroTech RPG<br/>
+            demonstrando domínio em solo, água, fertilizantes,<br/>
+            agrotóxicos, monocultura e gestão integrada.<br/><br/>
+            <span style={{color:TEAL}}>Companheiro: {pet.emoji} {pet.label}</span><br/>
+            <span style={{color:ORANGE}}>Score Final: {score.toLocaleString()} pts</span><br/>
+            <span style={{color:GOLD}}>Acertos: {totalRight}/64 questões</span><br/>
+            <span style={{color:GRAY}}>HP Final: {hp}/100</span>
+          </div>
+        </div>
+        <div style={{background:"#020d02",border:`1px solid ${GREEN}44`,borderRadius:4,padding:16,marginBottom:16,fontSize:10,color:GRAY,lineHeight:2,textAlign:"left"}}>
+          <div style={{color:GOLD,marginBottom:8,textAlign:"center"}}>🌍 SE TODOS APLICASSEM O QUE VOCÊ APRENDEU:</div>
+          ✅ -60% de erosão nas bacias agrícolas da região<br/>
+          ✅ Recuperação de nascentes em 3-5 anos<br/>
+          ✅ -30% no uso de agrotóxicos via MIP e rotação<br/>
+          ✅ +25% de produtividade por manejo racional do solo<br/>
+          ✅ Rios com OD acima de 5 mg/L e P abaixo de 0,1 mg/L<br/>
+          ✅ Sequestro de 1-2 t C/ha/ano no plantio direto 🌱
+        </div>
+        <button onClick={restart} style={{...PF,background:"#052a05",color:GREEN,border:`2px solid ${GREEN}`,padding:"12px 32px",cursor:"pointer",fontSize:12,borderRadius:2}}>▶ JOGAR NOVAMENTE</button>
+      </div>
+    </div>
+  );
+
+  if(!ph||!q)return null;
+
+  return(
+    <div style={{...PF,background:BG,minHeight:"100vh",color:"#e0e0e0"}}>
+      <style>{STYLE}</style>
+      <div style={{background:"#0d0d1a",borderBottom:`2px solid ${BORDER}`,padding:"6px 12px"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4,fontSize:9}}>
+          <span style={{color:GOLD}}>🌾 {name.toUpperCase()}</span>
+          <span style={{color:ORANGE}}>⭐ {score}</span>
+          <span style={{color:TEAL}}>{ph.world} • Q{qIdx+1}/{totalQ}</span>
+          <span style={{color:GRAY}}>Lv.{level} {pet.emoji}</span>
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+          <div>
+            <div style={{fontSize:8,color:GREEN,marginBottom:2}}>HP {hp}/100{streak>=2&&<span style={{color:ORANGE}}> 🔥x{streak}</span>}</div>
+            <Bar v={hp} max={100} color={hp>50?"#22c55e":hp>25?"#f97316":"#ef4444"}/>
+          </div>
+          <div>
+            <div style={{fontSize:8,color:BLUE,marginBottom:2}}>XP {xp}/{level*150}</div>
+            <Bar v={xp} max={level*150} color={BLUE}/>
+          </div>
+        </div>
+      </div>
+
+      <div style={{maxWidth:640,margin:"0 auto",padding:"10px 12px"}}>
+        <div style={{background:`${ph.color}22`,border:`1px solid ${ph.accent}55`,borderRadius:4,padding:"8px 12px",marginBottom:10}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+            <div>
+              <span style={{fontSize:14}}>{ph.icon}</span>
+              <span style={{fontSize:11,color:GOLD,marginLeft:8}}>{ph.title}</span>
+              <div style={{fontSize:9,color:GRAY,marginTop:2}}>{ph.subtitle}</div>
+            </div>
+            <div style={{fontSize:9,color:TEAL}}>Fase {phase+1}/8</div>
+          </div>
+        </div>
+
+        <div style={{background:`linear-gradient(180deg,#001028 0%,${ph.color}44 100%)`,border:`2px solid ${ph.accent}44`,borderRadius:4,padding:"8px 6px",marginBottom:10,position:"relative",height:80,overflow:"hidden"}}>
+          {[...Array(8)].map((_,i)=>(
+            <div key={i} style={{position:"absolute",top:`${10+Math.random()*40}%`,left:`${i*12+2}%`,width:2,height:2,background:GOLD,animation:`blink ${1+i*0.4}s infinite`}}/>
+          ))}
+          <div style={{position:"absolute",bottom:0,left:0,right:0,height:18,background:"#1a3a0a"}}/>
+          <div style={{position:"absolute",bottom:18,left:0,right:0,height:2,background:"#2a5a1a"}}/>
+          {[0,25,50,75,100].map(p=>(
+            <div key={p} style={{position:"absolute",bottom:18,left:`${p}%`,fontSize:10,color:walkPos>=p?GOLD:BORDER}}>🚩</div>
+          ))}
+          <div style={{position:"absolute",bottom:17,left:`${walkPos}%`,transition:"left 0.7s ease",textAlign:"center",lineHeight:1}}>
+            <div style={{fontSize:20,animation:"walk 0.5s infinite"}}>👨‍🌾</div>
+            <div style={{fontSize:12,animation:"floatpet 1.2s infinite",marginTop:-6}}>{pet.emoji}</div>
+          </div>
+          <div style={{position:"absolute",bottom:16,right:10,fontSize:16}}>🏁</div>
+          <div style={{position:"absolute",top:5,left:8,right:8,fontSize:8,color:"#88aacc",lineHeight:1.5}}>
+            {ph.story.slice(0,90)}...
+          </div>
+        </div>
+
+        <div style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:4,padding:12,marginBottom:10}}>
+          <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}>
+            <div style={{fontSize:9,color:PURPLE}}>Q{qIdx+1} — {"★".repeat(q.diff)}{"☆".repeat(5-q.diff)}</div>
+            <div style={{fontSize:9,color:TEAL}}>+{q.xp} XP</div>
+          </div>
+          <div style={{fontSize:11,color:"#ddd",lineHeight:1.8,marginBottom:8}}>{q.q}</div>
+          {q.ctx&&(
+            <div style={{background:"#0a0a1a",border:`1px solid ${BORDER}`,borderRadius:2,padding:"6px 10px",fontSize:9,color:GRAY,lineHeight:1.7}}>
+              {q.ctx}
+            </div>
+          )}
+        </div>
+
+        <div style={{display:"grid",gap:7,marginBottom:10}}>
+          {q.opts.map((opt,i)=>{
+            let bg=CARD,border=BORDER,col="#bbb";
+            if(answered!==null){
+              if(i===q.correct){bg="#031a03";border=GREEN;col=GREEN;}
+              else if(i===answered&&i!==q.correct){bg="#1a0303";border=RED;col=RED;}
+              else{col="#444";border="#1a1a2e";}
+            }
+            return(
+              <button key={i} onClick={()=>handleAnswer(i)} disabled={answered!==null}
+                style={{...PF,background:bg,border:`1px solid ${border}`,color:col,
+                  padding:"9px 12px",cursor:answered!==null?"default":"pointer",
+                  textAlign:"left",fontSize:10,lineHeight:1.6,borderRadius:2}}>
+                {opt}
+                {answered!==null&&i===q.correct&&" ✅"}
+                {answered!==null&&i===answered&&i!==q.correct&&" ❌"}
+              </button>
+            );
+          })}
+        </div>
+
+        {answered!==null&&(
+          <div style={{background:correct?"#021502":"#150202",border:`1px solid ${correct?GREEN:RED}44`,borderRadius:4,padding:12,marginBottom:10}}>
+            <div style={{fontSize:10,color:correct?GREEN:RED,marginBottom:6}}>
+              {correct?"✅ RESPOSTA CORRETA!":"❌ RESPOSTA INCORRETA"}
+              {streak>=3&&correct&&<span style={{color:ORANGE}}> 🔥 COMBO x{streak}!</span>}
+            </div>
+            <button onClick={()=>setShowWhy(!showWhy)}
+              style={{...PF,background:"transparent",border:`1px solid ${TEAL}`,color:TEAL,padding:"4px 12px",cursor:"pointer",fontSize:9,borderRadius:2,marginBottom:6}}>
+              {showWhy?"▲ OCULTAR EXPLICAÇÃO TÉCNICA":"▼ VER EXPLICAÇÃO TÉCNICA"}
+            </button>
+            {showWhy&&(
+              <div style={{fontSize:10,color:"#aac8aa",lineHeight:1.9,borderTop:`1px solid ${BORDER}`,paddingTop:8,marginTop:6,whiteSpace:"pre-line"}}>
+                {q.why}
+              </div>
+            )}
+            <div style={{marginTop:8}}>
+              <button onClick={nextQ}
+                style={{...PF,background:correct?"#031a03":"#1a0a02",color:correct?GREEN:ORANGE,
+                  border:`1px solid ${correct?GREEN:ORANGE}`,padding:"8px 20px",cursor:"pointer",fontSize:11,borderRadius:2}}>
+                {qIdx+1>=totalQ?"⭐ COMPLETAR FASE":"▶ PRÓXIMA QUESTÃO"}
+              </button>
+            </div>
+          </div>
+        )}
+
+        <div style={{background:"#070710",border:`1px solid ${BORDER}`,borderRadius:2,padding:"6px 8px",fontSize:8,color:GRAY,maxHeight:44,overflowY:"auto",marginBottom:8}}>
+          {log.length===0?"[ LOG DE COMBATE ]":log.map((l,i)=><div key={i}>{l}</div>)}
+        </div>
+
+        <div style={{display:"flex",gap:5,justifyContent:"center",flexWrap:"wrap"}}>
+          {PHASES.map((p,i)=>(
+            <div key={i} style={{textAlign:"center"}}>
+              <div style={{fontSize:i===phase?12:8,marginBottom:2,opacity:i<=phase?1:0.3}}>{p.icon}</div>
+              <div style={{width:i===phase?18:14,height:i===phase?8:5,margin:"0 auto",
+                background:i<phase?GREEN:i===phase?GOLD:"#222",
+                border:`1px solid ${i===phase?GOLD:BORDER}`,borderRadius:1}}/>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.render(React.createElement(App),document.getElementById("root"));
+</script>
+</body>
+</html>
